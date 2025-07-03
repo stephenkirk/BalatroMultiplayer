@@ -104,6 +104,32 @@ return {
 					"{C:attention}#1#{} additional time",
 				},
 			},
+			j_mp_idol = {
+				name = "The Idol",
+				text = {
+					"Each played {C:attention}#2#",
+					"of {V:1}#3#{} gives",
+					"{X:mult,C:white} X#1# {} Mult when scored",
+					"{s:0.8}Card changes every round",
+				},
+			},
+			j_mp_cloud_9 = {
+				name = "Cloud 9",
+				text = {
+					"Earn {C:money}$#1#{} for each",
+					"{C:attention}9{} in your {C:attention}full deck",
+					"at end of round",
+					"{C:inactive}(Currently {C:money}$#2#{}{C:inactive})",
+				},
+			},
+			j_mp_delayed_grat = {
+				name = "Delayed Gratification",
+				text = {
+					"Earn {C:money}$#1#{} per {C:attention}discard{} if",
+					"no discards are used",
+					"by end of the round",
+				},
+			},
 		},
 		Planet = {
 			c_mp_asteroid = {
@@ -160,6 +186,7 @@ return {
 		},
 		challenge_names = {
 			c_mp_standard = "Standard",
+			c_mp_experimental = "Experimental",
 			c_mp_badlatro = "Badlatro",
 			c_mp_tournament = "Tournament",
 			c_mp_weekly = "Weekly",
@@ -256,6 +283,8 @@ return {
 			k_random = "Random",
 			k_standard = "Standard",
 			k_standard_description = "The standard ruleset, includes Multiplayer cards and changes to the base game to fit the Multiplayer meta.",
+			k_experimental = "Experimental",
+			k_experimental_description = "Experimental ruleset based on the standard ruleset.",
 			k_vanilla = "Vanilla",
 			k_vanilla_description = "The vanilla ruleset, no Multiplayer cards, no modifications to base game content.",
 			k_weekly = "Weekly",
