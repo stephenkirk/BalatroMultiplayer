@@ -107,8 +107,13 @@ SMODS.Joker({
 		}
 	end,
 	-- todo needs to reimplement calculate = function(self, card, context)... (the actual calculation logic)
-	in_pool = function(self)
-		return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
+	-- in_pool = function(self)
+	-- 	return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
+	-- end,
+	calculate = function(self, card, context)
+		-- todo prob not this witchcraft
+		-- todo try without
+		-- return { x_mult = card.ability.extra }
 	end,
 })
 
@@ -133,9 +138,21 @@ SMODS.Joker({
 			card.ability.nine_tally or 0,
 		} }
 	end,
-	-- todo needs to reimplement calculate = function(self, card, context)... (the actual calculation logic)
 	in_pool = function(self)
 		return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
+	end,
+	-- todo still needs to be tested
+	calculate = function(self, card, context)
+		nine_tally = 0
+		for k, v in pairs(G.playing_cards) do
+			if v:get_id() == 9 then
+				nine_tally = nine_tally + 1
+			end
+		end
+		return { nine_tally = nine_tally }
+	end,
+	calc_dollar_bonus = function(self, card)
+		return card.ability.extra * (self.ability.nine_tally or 0)
 	end,
 })
 
@@ -161,16 +178,63 @@ SMODS.Joker({
 	in_pool = function(self)
 		return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
 	end,
+
+	calc_dollar_bonus = function(self, card)
+		if G.GAME.current_round.discards_used == 0 and G.GAME.current_round.discards_left > 0 then
+			return G.GAME.current_round.discards_left * card.ability.extra
+		end
+	end,
 })
 
 SMODS.Enhancement:take_ownership("glass", {
 	set_ability = function(self, card, initial, delay_sprites)
-		local x = MP.LOBBY.config.ruleset == "ruleset_mp_experimental"
-				and (MP.LOBBY.code or MP.LOBBY.ruleset_preview)
-				and 1.5
-			or 2
+		local is_experimental_ruleset = MP.LOBBY.config.ruleset == "ruleset_mp_experimental"
+		local lobby_is_active = MP.LOBBY.code or MP.LOBBY.ruleset_preview
+		local multiplier = (is_experimental_ruleset and lobby_is_active) and 1.5 or 2
+
 		-- Xmult is display, x_mult is internal. don't ask why, i don't know
-		card.ability.Xmult = x
-		card.ability.x_mult = x
+		card.ability.Xmult = multiplier
+		card.ability.x_mult = multiplier
+		-- Now 1/3 chance to break! FUN!
+		card.ability.extra = 3
+	end,
+}, true)
+
+-- Current TheOrder implementation mostly
+SMODS.Booster:take_ownership_by_kind("Standard", {
+	create_card = function(self, card, i)
+		local is_experimental = MP.LOBBY.config.ruleset == "ruleset_mp_experimental"
+
+		local cen_pool = {}
+		for k, v in pairs(G.P_CENTER_POOLS["Enhanced"]) do
+			if v.key ~= "m_glass" then
+				cen_pool[#cen_pool + 1] = v
+			end
+		end
+		local card = create_playing_card({
+			front = G.P_CARDS[_suit .. "_" .. _rank],
+			center = pseudorandom_element(cen_pool, pseudoseed("spe_card")),
+		}, G.hand, nil, i ~= 1, { G.C.SECONDARY_SET.Spectral })
+
+		debug.print("Card created:", card)
+
+		return card
+
+		-- local s_append = "" -- MP.get_booster_append(card)
+		-- local b_append = MP.ante_based() .. s_append
+
+		-- local _edition = poll_edition("standard_edition" .. b_append, 2, true)
+		-- local _seal = SMODS.poll_seal({ mod = 10, key = "stdseal" .. b_append })
+		-- local _enhancement = SMODS.poll_enhancement({ mod = 10, key = "stdenhancement" .. b_append })
+
+		-- return {
+		-- 	set = (pseudorandom(pseudoseed("stdset" .. b_append)) > 0.6) and "Enhanced" or "Base",
+		-- 	edition = _edition,
+		-- 	seal = _seal,
+		-- 	area = G.pack_cards,
+		-- 	skip_materialize = true,
+		-- 	soulable = true,
+		-- 	key_append = "sta" .. s_append,
+		-- }
 	end,
 }, true)

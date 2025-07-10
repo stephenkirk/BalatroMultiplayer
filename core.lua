@@ -142,7 +142,6 @@ MP.reset_game_states()
 MP.LOBBY.username = MP.UTILS.get_username()
 MP.LOBBY.blind_col = MP.UTILS.get_blind_col()
 
-
 if not SMODS.current_mod.lovely then
 	G.E_MANAGER:add_event(Event({
 		no_delete = true,
@@ -191,6 +190,35 @@ MP.load_mp_dir("ui")
 
 MP.load_mp_file("misc/disable_restart.lua")
 MP.load_mp_file("misc/mod_hash.lua")
+
+sendDebugMessage("Started stuff", "MULTIPLAYER")
+
+SMODS.Booster:take_ownership_by_kind("Standard", {
+	create_card = function(self, card, i)
+		local s_append = "" -- MP.get_booster_append(card)
+		local b_append = MP.ante_based() .. s_append
+
+		local _edition = poll_edition("standard_edition" .. b_append, 2, true)
+		local _seal = SMODS.poll_seal({ mod = 10, key = "stdseal" .. b_append })
+
+		sendDebugMessage("Create card called", "MULTIPLAYER")
+
+		-- card:set_ability(G.P_CENTERS["m_lucky"]) -- crashes - which makes sense, we haven't initalized a card ye
+		-- card.ability.effect = "Lucky Card" -- no-op
+
+		return {
+			set = (pseudorandom(pseudoseed("stdset" .. b_append)) > 0.6) and "Enhanced" or "Base",
+			edition = _edition,
+			ability = { effect = "Lucky Card" }, -- no-op
+			center = { effect = "Lucky Card", name = G.P_CENTERS["m_lucky"] }, -- no-op
+			seal = _seal,
+			area = G.pack_cards,
+			skip_materialize = true,
+			soulable = true,
+			key_append = "sta" .. s_append,
+		}
+	end,
+}, true)
 
 local SOCKET = MP.load_mp_file("networking/socket.lua")
 MP.NETWORKING_THREAD = love.thread.newThread(SOCKET)
