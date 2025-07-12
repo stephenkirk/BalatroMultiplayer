@@ -111,7 +111,17 @@ SMODS.Joker({
 		-- return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
 	end,
 	calculate = function(self, card, context)
-		-- TODO: Implement this witchcraft
+		if context.cardarea == G.play and context.individual then
+			if
+				context.other_card:get_id() == G.GAME.current_round.idol_card.id
+				and context.other_card:is_suit(G.GAME.current_round.idol_card.suit)
+			then
+				return {
+					x_mult = card.ability.extra,
+					colour = G.C.RED,
+				}
+			end
+		end
 	end,
 })
 
