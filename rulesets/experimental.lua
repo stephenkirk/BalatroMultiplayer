@@ -1,3 +1,5 @@
+-- TODO fix weird crash in ruleset overview
+
 MP.Ruleset({
 	key = "experimental",
 	multiplayer_content = true,
@@ -6,19 +8,21 @@ MP.Ruleset({
 		"j_idol",
 		"j_cloud_9",
 		"j_delayed_grat",
+		"j_bloodstone",
 	},
 	banned_consumables = {
 		"c_justice",
 	},
 	banned_vouchers = {},
 	banned_enhancements = {},
-	banned_tags = {},
+	banned_tags = { "tag_rare" },
 	banned_blinds = {},
 
 	reworked_jokers = {
 		"j_mp_hanging_chad",
 		"j_mp_idol",
 		"j_mp_cloud_9",
+		"j_mp_bloodstone",
 		"j_mp_delayed_grat",
 		"j_mp_conjoined_joker",
 		"j_mp_defensive_joker",
@@ -86,7 +90,7 @@ SMODS.Joker({
 -- j_idol=             {order = 127,  unlocked = false, discovered = false, blueprint_compat = true, perishable_compat = true, eternal_compat = true, rarity = 2, cost = 6, name = "The Idol", pos = {x=6,y=7}, set = "Joker", effect = "", config = {extra = 2}, unlock_condition = {type = 'chip_score', chips = 1000000}},
 SMODS.Joker({
 	key = "idol",
-	-- no_collection = true,
+	no_collection = true,
 	unlocked = true,
 	discovered = true,
 	blueprint_compat = true,
@@ -107,8 +111,7 @@ SMODS.Joker({
 		}
 	end,
 	in_pool = function(self)
-		return true
-		-- return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
+		return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
 	end,
 	calculate = function(self, card, context)
 		if context.cardarea == G.play and context.individual then
@@ -169,7 +172,7 @@ end
 
 SMODS.Joker({
 	key = "bloodstone",
-	-- no_collection = true,
+	no_collection = true,
 	unlocked = true,
 	discovered = true,
 	blueprint_compat = true,
@@ -189,8 +192,7 @@ SMODS.Joker({
 		}
 	end,
 	in_pool = function(self)
-		return true
-		-- return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
+		return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
 	end,
 	calculate = function(self, card, context)
 		if context.cardarea == G.play and context.individual then
@@ -216,7 +218,7 @@ SMODS.Joker({
 -- TODO at least display implementation is broken for total cards in deck
 SMODS.Joker({
 	key = "cloud_9",
-	-- no_collection = true,
+	no_collection = true,
 	unlocked = true,
 	discovered = true,
 	blueprint_compat = false,
@@ -229,9 +231,11 @@ SMODS.Joker({
 	-- todo not sure if we actually should need to tally nines twice
 	loc_vars = function(self, info_queue, card)
 		nine_tally = 0
-		for k, v in pairs(G.playing_cards) do
-			if v:get_id() == 9 then
-				nine_tally = nine_tally + 1
+		if G.playing_cards ~= nil then
+			for k, v in pairs(G.playing_cards) do
+				if v:get_id() == 9 then
+					nine_tally = nine_tally + 1
+				end
 			end
 		end
 
@@ -241,8 +245,7 @@ SMODS.Joker({
 		} }
 	end,
 	in_pool = function(self)
-		return true
-		-- return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
+		return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
 	end,
 	calc_dollar_bonus = function(self, card)
 		nine_tally = 0
@@ -257,7 +260,7 @@ SMODS.Joker({
 
 SMODS.Joker({
 	key = "delayed_grat",
-	-- no_collection = true,
+	no_collection = true,
 	unlocked = true,
 	discovered = true,
 	blueprint_compat = false,
@@ -273,8 +276,7 @@ SMODS.Joker({
 		} }
 	end,
 	in_pool = function(self)
-		return true
-		-- return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
+		return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
 	end,
 
 	calc_dollar_bonus = function(self, card)
