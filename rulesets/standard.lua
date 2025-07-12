@@ -10,7 +10,7 @@ MP.Ruleset({
 	banned_vouchers = {},
 	banned_enhancements = {},
 	banned_tags = {},
-	banned_blinds ={},
+	banned_blinds = {},
 
 	reworked_jokers = {
 		"j_mp_hanging_chad",
@@ -26,15 +26,15 @@ MP.Ruleset({
 		"j_mp_taxes",
 	},
 	reworked_consumables = {
-		"c_mp_asteroid"
+		"c_mp_asteroid",
 	},
 	reworked_vouchers = {},
 	reworked_enhancements = {
-		"m_glass"
+		"m_glass",
 	},
 	reworked_tags = {},
 	reworked_blinds = {
-		"bl_mp_nemesis"
+		"bl_mp_nemesis",
 	},
 }):inject()
 
@@ -78,11 +78,17 @@ SMODS.Joker({
 	end,
 })
 
-SMODS.Enhancement:take_ownership("glass", {
-	set_ability = function(self, card, initial, delay_sprites)
-		local x = MP.LOBBY.config.ruleset == "ruleset_mp_standard" and (MP.LOBBY.code or MP.LOBBY.ruleset_preview) and 1.5 or 2
-		-- Xmult is display, x_mult is internal. don't ask why, i don't know
-		card.ability.Xmult = x
-		card.ability.x_mult = x
-	end,
-}, true)
+-- TODO this take ownership was "load bearing" and always applied - should be mentioned in commit
+if MP.LOBBY.config.ruleset == "ruleset_mp_standard" and (MP.LOBBY.code or MP.LOBBY.ruleset_preview) then
+	SMODS.Enhancement:take_ownership("glass", {
+		set_ability = function(self, card, initial, delay_sprites)
+			local x = MP.LOBBY.config.ruleset == "ruleset_mp_standard"
+					and (MP.LOBBY.code or MP.LOBBY.ruleset_preview)
+					and 1.5
+				or 2
+			-- Xmult is display, x_mult is internal. don't ask why, i don't know
+			card.ability.Xmult = x
+			card.ability.x_mult = x
+		end,
+	}, true)
+end
