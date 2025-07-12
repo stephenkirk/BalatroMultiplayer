@@ -128,16 +128,14 @@ SMODS.Joker({
 	end,
 })
 
--- your rng complaints have been noted and filed accordingly
-
 -- Global state for persistent bias across bloodstone calls
 if not MP.bloodstone_bias then
-	MP.bloodstone_bias = 0.2
+	MP.starting_bloodstone_bias = 0.2
+	MP.bloodstone_bias = MP.starting_bloodstone_bias
 end
 
+-- your rng complaints have been noted and filed accordingly
 function cope_and_seethe_check(actual_odds)
-	local starting_bias = 0.2
-
 	if actual_odds >= 1 then
 		return true
 	end
@@ -147,26 +145,11 @@ function cope_and_seethe_check(actual_odds)
 	local roll = pseudorandom("bloodstone") + MP.bloodstone_bias
 
 	if roll < actual_odds then
-		MP.bloodstone_bias = starting_bias
+		MP.bloodstone_bias = MP.starting_bloodstone_bias
 		return true
 	else
 		MP.bloodstone_bias = MP.bloodstone_bias + step
 		return false
-	end
-end
-
-function consoledump(o)
-	if type(o) == "table" then
-		local s = "{ "
-		for k, v in pairs(o) do
-			if type(k) ~= "number" then
-				k = '"' .. k .. '"'
-			end
-			s = s .. "[" .. k .. "] = " .. consoledump(v) .. ","
-		end
-		return s .. "} "
-	else
-		return tostring(o)
 	end
 end
 
@@ -199,8 +182,6 @@ SMODS.Joker({
 			-- WHY does this crash???
 			if context.other_card:is_suit("Hearts") then
 				local bloodstone_hit = cope_and_seethe_check(G.GAME.probabilities.normal / card.ability.extra.odds)
-				print(bloodstone_hit)
-				-- TODO: Do we need if context.cardarea == G.play?
 				if bloodstone_hit then
 					return {
 						extra = { x_mult = card.ability.extra.Xmult },
@@ -208,14 +189,10 @@ SMODS.Joker({
 					}
 				end
 			end
-			-- TODO also why does it score twice afterward?
-			-- some context issue?
 		end
 	end,
 })
 
--- j_cloud_9=          {order = 73,  unlocked = true, discovered = false, blueprint_compat = false, perishable_compat = true, eternal_compat = true, rarity = 2, cost = 7, name = "Cloud 9",set = "Joker", config = {extra = 1}, pos = {x=7,y=12}},
--- TODO at least display implementation is broken for total cards in deck
 SMODS.Joker({
 	key = "cloud_9",
 	no_collection = true,
@@ -286,49 +263,49 @@ SMODS.Joker({
 	end,
 })
 
+-- TODO: How to make this actually work??
+-- Probably by running something when we start the game? "apply ruleset" kinda thing?
 local is_experimental_ruleset = MP.LOBBY.config.ruleset == "ruleset_mp_experimental"
 local lobby_is_active = MP.LOBBY.code or MP.LOBBY.ruleset_preview
--- if is_experimental_ruleset and lobby_is_active
-SMODS.Enhancement:take_ownership("glass", {
-	set_ability = function(self, card, initial, delay_sprites)
-		local xmult = 2
-		-- Xmult is display, x_mult is internal. don't ask why, i don't know
-		card.ability.Xmult = xmult
-		card.ability.x_mult = xmult
-		-- Now 1/3 chance to break because variance is fun
-		card.ability.extra = 3
-	end,
-}, true)
--- end
+if is_experimental_ruleset and lobby_is_active then
+	print("Glass and standard packs successfully overridden")
+	SMODS.Enhancement:take_ownership("glass", {
+		set_ability = function(self, card, initial, delay_sprites)
+			local xmult = 2
+			-- Xmult is display, x_mult is internal. don't ask why, i don't know
+			card.ability.Xmult = xmult
+			card.ability.x_mult = xmult
+			-- Now 1/3 chance to break because variance is fun
+			card.ability.extra = 3
+		end,
+	}, true)
 
--- TODO: Make sure we actually toggle this junk
-SMODS.Booster:take_ownership_by_kind("Standard", {
-	create_card = function(self, card, i)
-		local enchantment_pool = {}
+	SMODS.Booster:take_ownership_by_kind("Standard", {
+		create_card = function(self, card, i)
+			local enchantment_pool = {}
 
-		-- Skip glass
-		for k, v in pairs(G.P_CENTER_POOLS["Enhanced"]) do
-			if v.key ~= "m_glass" then
-				enchantment_pool[#enchantment_pool + 1] = v
+			-- Skip glass
+			for k, v in pairs(G.P_CENTER_POOLS["Enhanced"]) do
+				if v.key ~= "m_glass" then
+					enchantment_pool[#enchantment_pool + 1] = v
+				end
 			end
-		end
 
-		local ante_rng = MP.ante_based()
+			local ante_rng = MP.ante_based()
 
-		-- TODO: Implement edition and seal
-		local _edition = poll_edition("standard_edition" .. ante_rng, 2, true)
-		local _seal = SMODS.poll_seal({ mod = 10, key = "stdseal" .. ante_rng })
+			-- TODO: Implement edition and seal
+			local _edition = poll_edition("standard_edition" .. ante_rng, 2, true)
+			local _seal = SMODS.poll_seal({ mod = 10, key = "stdseal" .. ante_rng })
 
-		local newCard = create_playing_card({
-			front = pseudorandom_element(G.P_CARDS, pseudoseed("stdset" .. ante_rng)),
-			center = pseudorandom_element(enchantment_pool, pseudoseed("stdset" .. ante_rng)),
-		}, G.pack_cards, true, i ~= 1, { G.C.SECONDARY_SET.Spectral })
+			local newCard = create_playing_card({
+				front = pseudorandom_element(G.P_CARDS, pseudoseed("stdset" .. ante_rng)),
+				center = pseudorandom_element(enchantment_pool, pseudoseed("stdset" .. ante_rng)),
+			}, G.pack_cards, true, i ~= 1, { G.C.SECONDARY_SET.Spectral })
 
-		newCard:set_edition(_edition)
-		newCard:set_seal(_seal)
+			newCard:set_edition(_edition)
+			newCard:set_seal(_seal)
 
-		sendDebugMessage("Standard pack Card created", "MULTIPLAYER")
-
-		return newCard
-	end,
-}, true)
+			return newCard
+		end,
+	}, true)
+end
