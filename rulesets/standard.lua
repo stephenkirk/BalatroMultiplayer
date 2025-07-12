@@ -78,17 +78,5 @@ SMODS.Joker({
 	end,
 })
 
--- TODO this take ownership was "load bearing" and always applied - should be mentioned in commit
-if MP.LOBBY.config.ruleset == "ruleset_mp_standard" and (MP.LOBBY.code or MP.LOBBY.ruleset_preview) then
-	SMODS.Enhancement:take_ownership("glass", {
-		set_ability = function(self, card, initial, delay_sprites)
-			local x = MP.LOBBY.config.ruleset == "ruleset_mp_standard"
-					and (MP.LOBBY.code or MP.LOBBY.ruleset_preview)
-					and 1.5
-				or 2
-			-- Xmult is display, x_mult is internal. don't ask why, i don't know
-			card.ability.Xmult = x
-			card.ability.x_mult = x
-		end,
-	}, true)
-end
+-- Overrides are now handled dynamically in _rulesets.lua via MP.apply_ruleset_overrides()
+-- This ensures they are evaluated when the ruleset is selected, not at file load time

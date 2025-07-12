@@ -215,6 +215,8 @@ function G.FUNCS.change_ruleset_selection(e)
 		"standard_ruleset_button",
 		function(ruleset_name)
 			MP.LOBBY.config.ruleset = "ruleset_mp_" .. ruleset_name
+			-- Apply ruleset-specific overrides when ruleset is selected
+			MP.apply_ruleset_overrides(MP.LOBBY.config.ruleset)
 		end
 	)
 

@@ -179,7 +179,6 @@ SMODS.Joker({
 	end,
 	calculate = function(self, card, context)
 		if context.cardarea == G.play and context.individual then
-			-- WHY does this crash???
 			if context.other_card:is_suit("Hearts") then
 				local bloodstone_hit = cope_and_seethe_check(G.GAME.probabilities.normal / card.ability.extra.odds)
 				if bloodstone_hit then
@@ -263,49 +262,6 @@ SMODS.Joker({
 	end,
 })
 
--- TODO: How to make this actually work??
--- Probably by running something when we start the game? "apply ruleset" kinda thing?
-local is_experimental_ruleset = MP.LOBBY.config.ruleset == "ruleset_mp_experimental"
-local lobby_is_active = MP.LOBBY.code or MP.LOBBY.ruleset_preview
-if is_experimental_ruleset and lobby_is_active then
-	print("Glass and standard packs successfully overridden")
-	SMODS.Enhancement:take_ownership("glass", {
-		set_ability = function(self, card, initial, delay_sprites)
-			local xmult = 2
-			-- Xmult is display, x_mult is internal. don't ask why, i don't know
-			card.ability.Xmult = xmult
-			card.ability.x_mult = xmult
-			-- Now 1/3 chance to break because variance is fun
-			card.ability.extra = 3
-		end,
-	}, true)
-
-	SMODS.Booster:take_ownership_by_kind("Standard", {
-		create_card = function(self, card, i)
-			local enchantment_pool = {}
-
-			-- Skip glass
-			for k, v in pairs(G.P_CENTER_POOLS["Enhanced"]) do
-				if v.key ~= "m_glass" then
-					enchantment_pool[#enchantment_pool + 1] = v
-				end
-			end
-
-			local ante_rng = MP.ante_based()
-
-			-- TODO: Implement edition and seal
-			local _edition = poll_edition("standard_edition" .. ante_rng, 2, true)
-			local _seal = SMODS.poll_seal({ mod = 10, key = "stdseal" .. ante_rng })
-
-			local newCard = create_playing_card({
-				front = pseudorandom_element(G.P_CARDS, pseudoseed("stdset" .. ante_rng)),
-				center = pseudorandom_element(enchantment_pool, pseudoseed("stdset" .. ante_rng)),
-			}, G.pack_cards, true, i ~= 1, { G.C.SECONDARY_SET.Spectral })
-
-			newCard:set_edition(_edition)
-			newCard:set_seal(_seal)
-
-			return newCard
-		end,
-	}, true)
-end
+-- Overrides are now handled dynamically in _rulesets.lua via MP.apply_ruleset_overrides()
+-- This ensures they are evaluated when the ruleset is selected, not at file load time
+-- But they should probably be moved here if required
