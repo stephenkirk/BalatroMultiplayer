@@ -130,6 +130,16 @@ return {
 					"by end of the round",
 				},
 			},
+			j_mp_bloodstone = {
+				name = "Bloodstone",
+				text = {
+					"{C:green}#1# in #2#{} chance for",
+					"played cards with",
+					"{C:hearts}Heart{} suit to give",
+					"{X:mult,C:white} X#3# {} Mult when scored",
+					"{C:inactive}(Employs variance reduction algorithms){}",
+				},
+			},
 		},
 		Planet = {
 			c_mp_asteroid = {

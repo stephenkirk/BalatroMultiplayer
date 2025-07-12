@@ -78,15 +78,15 @@ SMODS.Joker({
 			end
 		end
 	end,
-	in_pool = function(self)
-		return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
-	end,
+	-- in_pool = function(self)
+	-- 	return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
+	-- end,
 })
 
 -- j_idol=             {order = 127,  unlocked = false, discovered = false, blueprint_compat = true, perishable_compat = true, eternal_compat = true, rarity = 2, cost = 6, name = "The Idol", pos = {x=6,y=7}, set = "Joker", effect = "", config = {extra = 2}, unlock_condition = {type = 'chip_score', chips = 1000000}},
 SMODS.Joker({
 	key = "idol",
-	no_collection = true,
+	-- no_collection = true,
 	unlocked = true,
 	discovered = true,
 	blueprint_compat = true,
@@ -106,21 +106,107 @@ SMODS.Joker({
 			},
 		}
 	end,
-	-- todo needs to reimplement calculate = function(self, card, context)... (the actual calculation logic)
-	-- in_pool = function(self)
-	-- 	return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
-	-- end,
+	in_pool = function(self)
+		return true
+		-- return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
+	end,
 	calculate = function(self, card, context)
-		-- todo prob not this witchcraft
-		-- todo try without
-		-- return { x_mult = card.ability.extra }
+		-- TODO: Implement this witchcraft
+	end,
+})
+
+-- your rng complaints have been noted and filed accordingly
+
+-- Global state for persistent bias across bloodstone calls
+if not MP.bloodstone_bias then
+	MP.bloodstone_bias = 0.2
+end
+
+function cope_and_seethe_check(actual_odds)
+	local starting_bias = 0.2
+
+	if actual_odds >= 1 then
+		return true
+	end
+
+	-- how much easier (30%) do we make it for each successive roll?
+	local step = -0.3
+	local roll = pseudorandom("bloodstone") + MP.bloodstone_bias
+
+	if roll < actual_odds then
+		MP.bloodstone_bias = starting_bias
+		return true
+	else
+		MP.bloodstone_bias = MP.bloodstone_bias + step
+		return false
+	end
+end
+
+function consoledump(o)
+	if type(o) == "table" then
+		local s = "{ "
+		for k, v in pairs(o) do
+			if type(k) ~= "number" then
+				k = '"' .. k .. '"'
+			end
+			s = s .. "[" .. k .. "] = " .. consoledump(v) .. ","
+		end
+		return s .. "} "
+	else
+		return tostring(o)
+	end
+end
+
+SMODS.Joker({
+	key = "bloodstone",
+	-- no_collection = true,
+	unlocked = true,
+	discovered = true,
+	blueprint_compat = true,
+	perishable_compat = true,
+	eternal_compat = true,
+	rarity = 2,
+	cost = 7,
+	pos = { x = 0, y = 8 },
+	config = { extra = { odds = 2, Xmult = 1.5 }, mp_sticker_balanced = true },
+	loc_vars = function(self, info_queue, card)
+		return {
+			vars = {
+				"" .. (G.GAME and G.GAME.probabilities.normal or 1),
+				card.ability.extra.odds,
+				card.ability.extra.Xmult,
+			},
+		}
+	end,
+	in_pool = function(self)
+		return true
+		-- return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
+	end,
+	calculate = function(self, card, context)
+		if context.cardarea == G.play and context.individual then
+			-- WHY does this crash???
+			if context.other_card:is_suit("Hearts") then
+				local bloodstone_hit = cope_and_seethe_check(G.GAME.probabilities.normal / card.ability.extra.odds)
+				print(bloodstone_hit)
+				-- TODO: Do we need if context.cardarea == G.play?
+				if bloodstone_hit then
+					return {
+						extra = { x_mult = card.ability.extra.Xmult },
+						message = "Cope!",
+					}
+				end
+			end
+			-- TODO also why does it score twice afterward?
+			-- some context issue?
+		end
 	end,
 })
 
 -- j_cloud_9=          {order = 73,  unlocked = true, discovered = false, blueprint_compat = false, perishable_compat = true, eternal_compat = true, rarity = 2, cost = 7, name = "Cloud 9",set = "Joker", config = {extra = 1}, pos = {x=7,y=12}},
+-- TODO at least display implementation is broken for total cards in deck
 SMODS.Joker({
 	key = "cloud_9",
-	no_collection = true,
+	-- no_collection = true,
 	unlocked = true,
 	discovered = true,
 	blueprint_compat = false,
@@ -130,36 +216,38 @@ SMODS.Joker({
 	cost = 7,
 	pos = { x = 7, y = 12 },
 	config = { extra = 2, mp_sticker_balanced = true },
-	loc_vars = function(self, info_queue, card) -- is this only for overview or possibly also used for calculations?
-		-- feels like info text only
-		-- unclear if we should use 'card' or 'self' though
-		return { vars = {
-			card.ability.extra,
-			card.ability.nine_tally or 0,
-		} }
-	end,
-	in_pool = function(self)
-		return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
-	end,
-	-- todo still needs to be tested
-	calculate = function(self, card, context)
+	-- todo not sure if we actually should need to tally nines twice
+	loc_vars = function(self, info_queue, card)
 		nine_tally = 0
 		for k, v in pairs(G.playing_cards) do
 			if v:get_id() == 9 then
 				nine_tally = nine_tally + 1
 			end
 		end
-		return { nine_tally = nine_tally }
+
+		return { vars = {
+			card.ability.extra,
+			card.ability.extra * (nine_tally or 0),
+		} }
+	end,
+	in_pool = function(self)
+		return true
+		-- return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
 	end,
 	calc_dollar_bonus = function(self, card)
-		return card.ability.extra * (self.ability.nine_tally or 0)
+		nine_tally = 0
+		for k, v in pairs(G.playing_cards) do
+			if v:get_id() == 9 then
+				nine_tally = nine_tally + 1
+			end
+		end
+		return card.ability.extra * (nine_tally or 0)
 	end,
 })
 
--- j_delayed_grat=     {order = 35,  unlocked = true,  discovered = false, blueprint_compat = false, perishable_compat = true, eternal_compat = true, rarity = 1, cost = 4, name = "Delayed Gratification", pos = {x=4,y=3}, set = "Joker", effect = "Discard dollars", cost_mult = 1.0, config = {extra = 2}},
 SMODS.Joker({
 	key = "delayed_grat",
-	no_collection = true,
+	-- no_collection = true,
 	unlocked = true,
 	discovered = true,
 	blueprint_compat = false,
@@ -174,9 +262,9 @@ SMODS.Joker({
 			card.ability.extra,
 		} }
 	end,
-	-- todo needs to reimplement calculate = function(self, card, context)...
 	in_pool = function(self)
-		return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
+		return true
+		-- return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
 	end,
 
 	calc_dollar_bonus = function(self, card)
@@ -186,55 +274,49 @@ SMODS.Joker({
 	end,
 })
 
+local is_experimental_ruleset = MP.LOBBY.config.ruleset == "ruleset_mp_experimental"
+local lobby_is_active = MP.LOBBY.code or MP.LOBBY.ruleset_preview
+-- if is_experimental_ruleset and lobby_is_active
 SMODS.Enhancement:take_ownership("glass", {
 	set_ability = function(self, card, initial, delay_sprites)
-		local is_experimental_ruleset = MP.LOBBY.config.ruleset == "ruleset_mp_experimental"
-		local lobby_is_active = MP.LOBBY.code or MP.LOBBY.ruleset_preview
-		local multiplier = (is_experimental_ruleset and lobby_is_active) and 1.5 or 2
-
+		local xmult = 2
 		-- Xmult is display, x_mult is internal. don't ask why, i don't know
-		card.ability.Xmult = multiplier
-		card.ability.x_mult = multiplier
-		-- Now 1/3 chance to break! FUN!
+		card.ability.Xmult = xmult
+		card.ability.x_mult = xmult
+		-- Now 1/3 chance to break because variance is fun
 		card.ability.extra = 3
 	end,
 }, true)
+-- end
 
--- Current TheOrder implementation mostly
+-- TODO: Make sure we actually toggle this junk
 SMODS.Booster:take_ownership_by_kind("Standard", {
 	create_card = function(self, card, i)
-		local is_experimental = MP.LOBBY.config.ruleset == "ruleset_mp_experimental"
+		local enchantment_pool = {}
 
-		local cen_pool = {}
+		-- Skip glass
 		for k, v in pairs(G.P_CENTER_POOLS["Enhanced"]) do
 			if v.key ~= "m_glass" then
-				cen_pool[#cen_pool + 1] = v
+				enchantment_pool[#enchantment_pool + 1] = v
 			end
 		end
-		local card = create_playing_card({
-			front = G.P_CARDS[_suit .. "_" .. _rank],
-			center = pseudorandom_element(cen_pool, pseudoseed("spe_card")),
-		}, G.hand, nil, i ~= 1, { G.C.SECONDARY_SET.Spectral })
 
-		debug.print("Card created:", card)
+		local ante_rng = MP.ante_based()
 
-		return card
+		-- TODO: Implement edition and seal
+		local _edition = poll_edition("standard_edition" .. ante_rng, 2, true)
+		local _seal = SMODS.poll_seal({ mod = 10, key = "stdseal" .. ante_rng })
 
-		-- local s_append = "" -- MP.get_booster_append(card)
-		-- local b_append = MP.ante_based() .. s_append
+		local newCard = create_playing_card({
+			front = pseudorandom_element(G.P_CARDS, pseudoseed("stdset" .. ante_rng)),
+			center = pseudorandom_element(enchantment_pool, pseudoseed("stdset" .. ante_rng)),
+		}, G.pack_cards, true, i ~= 1, { G.C.SECONDARY_SET.Spectral })
 
-		-- local _edition = poll_edition("standard_edition" .. b_append, 2, true)
-		-- local _seal = SMODS.poll_seal({ mod = 10, key = "stdseal" .. b_append })
-		-- local _enhancement = SMODS.poll_enhancement({ mod = 10, key = "stdenhancement" .. b_append })
+		newCard:set_edition(_edition)
+		newCard:set_seal(_seal)
 
-		-- return {
-		-- 	set = (pseudorandom(pseudoseed("stdset" .. b_append)) > 0.6) and "Enhanced" or "Base",
-		-- 	edition = _edition,
-		-- 	seal = _seal,
-		-- 	area = G.pack_cards,
-		-- 	skip_materialize = true,
-		-- 	soulable = true,
-		-- 	key_append = "sta" .. s_append,
-		-- }
+		sendDebugMessage("Standard pack Card created", "MULTIPLAYER")
+
+		return newCard
 	end,
 }, true)
