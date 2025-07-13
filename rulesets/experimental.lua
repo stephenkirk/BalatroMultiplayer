@@ -82,9 +82,9 @@ SMODS.Joker({
 			end
 		end
 	end,
-	-- in_pool = function(self)
-	-- 	return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
-	-- end,
+	in_pool = function(self)
+		return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
+	end,
 })
 
 -- j_idol=             {order = 127,  unlocked = false, discovered = false, blueprint_compat = true, perishable_compat = true, eternal_compat = true, rarity = 2, cost = 6, name = "The Idol", pos = {x=6,y=7}, set = "Joker", effect = "", config = {extra = 2}, unlock_condition = {type = 'chip_score', chips = 1000000}},

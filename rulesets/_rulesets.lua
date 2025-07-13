@@ -140,6 +140,7 @@ function MP.apply_ruleset_overrides(ruleset_key)
 	end
 
 	print("Ruleset applied: " .. ruleset_key)
+	sendDebugMessage("Ruleset applied: " .. ruleset_key)
 
 	MP.ACTIVE_RULESET_OVERRIDES.current_ruleset = ruleset_key
 end
