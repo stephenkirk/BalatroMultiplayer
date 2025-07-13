@@ -190,8 +190,9 @@ MP.load_mp_dir("ui")
 
 MP.load_mp_file("misc/disable_restart.lua")
 MP.load_mp_file("misc/mod_hash.lua")
+MP.load_mp_file("misc/prng.lua")
 
 local SOCKET = MP.load_mp_file("networking/socket.lua")
 MP.NETWORKING_THREAD = love.thread.newThread(SOCKET)
 MP.NETWORKING_THREAD:start(SMODS.Mods["Multiplayer"].config.server_url, SMODS.Mods["Multiplayer"].config.server_port)
--- MP.ACTIONS.connect()
+MP.ACTIONS.connect()

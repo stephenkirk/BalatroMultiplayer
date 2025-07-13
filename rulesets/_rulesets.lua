@@ -128,14 +128,11 @@ function MP.apply_rulesets()
 	end
 end
 
--- Dynamic ruleset override system
 MP.ACTIVE_RULESET_OVERRIDES = {}
 
 function MP.apply_ruleset_overrides(ruleset_key)
-	-- Clear any existing overrides
 	MP.clear_ruleset_overrides()
 
-	-- Apply new overrides based on ruleset
 	if ruleset_key == "ruleset_mp_standard" then
 		MP.apply_standard_overrides()
 	elseif ruleset_key == "ruleset_mp_experimental" then
@@ -147,6 +144,7 @@ function MP.apply_ruleset_overrides(ruleset_key)
 	MP.ACTIVE_RULESET_OVERRIDES.current_ruleset = ruleset_key
 end
 
+-- TODO not fully implemented yet - but doesn't need to be until release
 function MP.clear_ruleset_overrides()
 	-- copypaste from smods
 	-- TODO copypaste from 506a instead
