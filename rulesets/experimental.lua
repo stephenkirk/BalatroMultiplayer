@@ -1,4 +1,5 @@
 -- TODO fix weird crash in ruleset overview
+-- TODO maybe function in MP.Ruleset that defines the functions we call afterwards etc
 
 MP.Ruleset({
 	key = "experimental",
@@ -7,7 +8,7 @@ MP.Ruleset({
 		"j_hanging_chad",
 		"j_idol",
 		"j_cloud_9",
-		"j_delayed_grat",
+		-- "j_delayed_grat",
 		"j_bloodstone",
 	},
 	banned_consumables = {
@@ -23,7 +24,7 @@ MP.Ruleset({
 		"j_mp_idol",
 		"j_mp_cloud_9",
 		"j_mp_bloodstone",
-		"j_mp_delayed_grat",
+		-- "j_mp_delayed_grat",
 		"j_mp_conjoined_joker",
 		"j_mp_defensive_joker",
 		"j_mp_lets_go_gambling",
@@ -206,7 +207,7 @@ SMODS.Joker({
 	config = { extra = 2, mp_sticker_balanced = true },
 	-- todo not sure if we actually should need to tally nines twice
 	loc_vars = function(self, info_queue, card)
-		nine_tally = 0
+		local nine_tally = 0
 		if G.playing_cards ~= nil then
 			for k, v in pairs(G.playing_cards) do
 				if v:get_id() == 9 then
@@ -215,52 +216,54 @@ SMODS.Joker({
 			end
 		end
 
-		return { vars = {
-			card.ability.extra,
-			card.ability.extra * (nine_tally or 0),
-		} }
+		return {
+			vars = {
+				card.ability.extra,
+				(max(nine_tally, 4) + min(nine_tally - 4, 0) * card.ability.extra) or 0,
+			},
+		}
 	end,
 	in_pool = function(self)
 		return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
 	end,
 	calc_dollar_bonus = function(self, card)
-		nine_tally = 0
+		local nine_tally = 0
 		for k, v in pairs(G.playing_cards) do
 			if v:get_id() == 9 then
 				nine_tally = nine_tally + 1
 			end
 		end
-		return card.ability.extra * (nine_tally or 0)
+		return (max(nine_tally, 4) + min(nine_tally - 4, 0) * card.ability.extra) or 0
 	end,
 })
+--
+-- SMODS.Joker({
+-- 	key = "delayed_grat",
+-- 	no_collection = true,
+-- 	unlocked = true,
+-- 	discovered = true,
+-- 	blueprint_compat = false,
+-- 	perishable_compat = true,
+-- 	eternal_compat = true,
+-- 	rarity = 1,
+-- 	cost = 4,
+-- 	pos = { x = 4, y = 3 },
+-- 	config = { extra = 3, mp_sticker_balanced = true },
+-- 	loc_vars = function(self, info_queue, card)
+-- 		return { vars = {
+-- 			card.ability.extra,
+-- 		} }
+-- 	end,
+-- 	in_pool = function(self)
+-- 		return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
+-- 	end,
 
-SMODS.Joker({
-	key = "delayed_grat",
-	no_collection = true,
-	unlocked = true,
-	discovered = true,
-	blueprint_compat = false,
-	perishable_compat = true,
-	eternal_compat = true,
-	rarity = 1,
-	cost = 4,
-	pos = { x = 4, y = 3 },
-	config = { extra = 3, mp_sticker_balanced = true },
-	loc_vars = function(self, info_queue, card)
-		return { vars = {
-			card.ability.extra,
-		} }
-	end,
-	in_pool = function(self)
-		return MP.LOBBY.config.ruleset == "ruleset_mp_experimental" and MP.LOBBY.code
-	end,
-
-	calc_dollar_bonus = function(self, card)
-		if G.GAME.current_round.discards_used == 0 and G.GAME.current_round.discards_left > 0 then
-			return G.GAME.current_round.discards_left * card.ability.extra
-		end
-	end,
-})
+-- 	calc_dollar_bonus = function(self, card)
+-- 		if G.GAME.current_round.discards_used == 0 and G.GAME.current_round.discards_left > 0 then
+-- 			return G.GAME.current_round.discards_left * card.ability.extra
+-- 		end
+-- 	end,
+-- })
 
 -- Overrides are now handled dynamically in _rulesets.lua via MP.apply_ruleset_overrides()
 -- This ensures they are evaluated when the ruleset is selected, not at file load time

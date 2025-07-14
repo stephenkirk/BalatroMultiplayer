@@ -130,6 +130,9 @@ end
 
 MP.ACTIVE_RULESET_OVERRIDES = {}
 
+-- TODO: Make sure overrides are clearly defined in each ruleset
+-- And have a "fallback" ruleset to reset to
+-- (either game default or The Order, depending on what is configured)
 function MP.apply_ruleset_overrides(ruleset_key)
 	MP.clear_ruleset_overrides()
 
@@ -145,7 +148,7 @@ function MP.apply_ruleset_overrides(ruleset_key)
 	MP.ACTIVE_RULESET_OVERRIDES.current_ruleset = ruleset_key
 end
 
--- TODO not fully implemented yet - but doesn't need to be until release
+-- TODO not fully implemented
 function MP.clear_ruleset_overrides()
 	-- copypaste from smods
 	-- TODO copypaste from 506a instead
@@ -209,7 +212,6 @@ function MP.apply_experimental_overrides()
 		key = "m_glass",
 	}
 
-	-- Apply experimental glass override (2x with 1/3 break chance)
 	SMODS.Enhancement:take_ownership("glass", {
 		set_ability = function(self, card, initial, delay_sprites)
 			card.ability.Xmult = 2

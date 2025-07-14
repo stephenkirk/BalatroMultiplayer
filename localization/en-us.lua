@@ -86,7 +86,7 @@ return {
 				text = {
 					"{C:red}+#1#{} discards and",
 					"{C:red}+#2#{} discard for your {X:purple,C:white}Nemesis{}",
-					"{C:inactive}(Eaten after {C:attention}PvP Blind{}{C:inactive})"
+					"{C:inactive}(Eaten after {C:attention}PvP Blind{}{C:inactive})",
 				},
 			},
 			j_mp_pacifist = {
@@ -116,9 +116,10 @@ return {
 			j_mp_cloud_9 = {
 				name = "Cloud 9",
 				text = {
-					"Earn {C:money}$#1#{} for each",
-					"{C:attention}9{} in your {C:attention}full deck",
-					"at end of round",
+					"Earn {C:money}$1{} for each",
+					"{C:attention}9{} in your full deck",
+					"at end of round {C:attention}(max $4){}. ",
+					"Each 9 beyond the 4th earns {C:money}$#1#{}.",
 					"{C:inactive}(Currently {C:money}$#2#{}{C:inactive})",
 				},
 			},
@@ -148,7 +149,7 @@ return {
 					"Remove #1# level from",
 					"your {X:purple,C:white}Nemesis'{}",
 					"highest level {C:legendary,E:1}poker hand{}",
-					"at start of {C:attention}PvP Blind{}"
+					"at start of {C:attention}PvP Blind{}",
 				},
 			},
 		},
@@ -241,7 +242,7 @@ return {
 			b_continue_singleplayer = "Continue in Singleplayer",
 			b_the_order_integration = "Enable The Order Integration",
 			b_view_nemesis_deck = "View Decks",
-      b_toggle_jokers = "Toggle Jokers",
+			b_toggle_jokers = "Toggle Jokers",
 			k_continue_singleplayer_tooltip = "This will overwrite your current singleplayer run",
 			k_enemy_score = "Current Enemy score",
 			k_enemy_hands = "Enemy hands left: ",
@@ -294,7 +295,7 @@ return {
 			k_standard = "Standard",
 			k_standard_description = "The standard ruleset, includes Multiplayer cards and changes to the base game to fit the Multiplayer meta.",
 			k_experimental = "Experimental",
-			k_experimental_description = "Experimental ruleset based on the standard ruleset.",
+			k_experimental_description = "Experimental ruleset based on the standard ruleset. Glass only available through Spectral cards.",
 			k_vanilla = "Vanilla",
 			k_vanilla_description = "The vanilla ruleset, no Multiplayer cards, no modifications to base game content.",
 			k_weekly = "Weekly",
