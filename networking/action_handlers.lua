@@ -65,6 +65,7 @@ local function action_lobbyInfo(host, hostHash, hostCached, guest, guestHash, gu
 		cached = hostCached == "true",
 		config = hostConfig,
 	}
+
 	if guest ~= nil then
 		local guestName, guestCol = parseName(guest)
 		local guestConfig, guestMods = MP.UTILS.parse_Hash(guestHash)
