@@ -224,8 +224,8 @@ function G.UIDEF.create_UIBox_view_hash(type)
 						padding = 0.07,
 						align = "cm",
 					},
-					nodes = MP.UI.hash_str_to_view(
-						type == "host" and MP.LOBBY.host.hash_str or MP.LOBBY.guest.hash_str,
+					nodes = MP.UI.modlist_to_view(
+						type == "host" and MP.LOBBY.host.config.Mods or MP.LOBBY.guest.config.Mods,
 						G.C.UI.TEXT_LIGHT
 					),
 				},
@@ -234,14 +234,15 @@ function G.UIDEF.create_UIBox_view_hash(type)
 	)
 end
 
-function MP.UI.hash_str_to_view(str, text_colour)
+function MP.UI.modlist_to_view(mods, text_colour)
 	local t = {}
 
-	if not str then
+	if not mods then
 		return t
 	end
 
-	for s in str:gmatch("[^;]+") do
+	for mod_name, mod_version in pairs(mods) do
+		local display_text = mod_version and (mod_name .. "-" .. mod_version) or mod_name
 		table.insert(t, {
 			n = G.UIT.R,
 			config = {
@@ -252,7 +253,7 @@ function MP.UI.hash_str_to_view(str, text_colour)
 				{
 					n = G.UIT.T,
 					config = {
-						text = s,
+						text = display_text,
 						shadow = true,
 						scale = 0.4,
 						colour = text_colour,
@@ -378,7 +379,7 @@ G.FUNCS.start_run = function(e, args)
 			if MP.DECK.MAX_STAKE > 0 and chosen_stake > MP.DECK.MAX_STAKE then
 				MP.UTILS.overlay_message(
 					"Selected stake is incompatible with Multiplayer, stake set to "
-					.. SMODS.stake_from_index(MP.DECK.MAX_STAKE)
+						.. SMODS.stake_from_index(MP.DECK.MAX_STAKE)
 				)
 				chosen_stake = MP.DECK.MAX_STAKE
 			end
