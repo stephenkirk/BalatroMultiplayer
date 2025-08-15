@@ -112,13 +112,6 @@ MP.Ruleset({
 		}
 	end,
 
-	is_disabled = function(self)
-		if not MP.INTEGRATIONS.TheOrder then
-			return localize("k_ruleset_disabled_the_order_required")
-		end
-		return false
-	end,
-
 	-- todo this would be sick
 	overrides = function()
 		print("Override for sandbox called")
@@ -128,7 +121,7 @@ MP.Ruleset({
 
 	force_lobby_options = function(self)
 		MP.LOBBY.config.preview_disabled = true
-		MP.LOBBY.config.different_seeds = true
+		MP.LOBBY.config.the_order = false
 		return true
 	end,
 }):inject()

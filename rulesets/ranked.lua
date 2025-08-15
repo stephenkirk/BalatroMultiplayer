@@ -9,23 +9,23 @@ MP.Ruleset({
 	banned_vouchers = {},
 	banned_enhancements = {},
 	banned_tags = {},
-	banned_blinds ={},
+	banned_blinds = {},
 	reworked_jokers = {
 		"j_hanging_chad",
 	},
 	reworked_consumables = {},
 	reworked_vouchers = {},
 	reworked_enhancements = {
-		"m_glass"
+		"m_glass",
 	},
 	reworked_tags = {},
 	reworked_blinds = {},
-	create_info_menu = function ()
+	create_info_menu = function()
 		return {
 			{
 				n = G.UIT.R,
 				config = {
-					align = "tm"
+					align = "tm",
 				},
 				nodes = {
 					MP.UI.BackgroundGrouping(localize("k_has_multiplayer_content"), {
@@ -35,15 +35,15 @@ MP.Ruleset({
 								text = localize("k_yes"),
 								scale = 0.8,
 								colour = G.C.GREEN,
-							}
-						}
-					}, {col = true, text_scale = 0.6}),
+							},
+						},
+					}, { col = true, text_scale = 0.6 }),
 					{
 						n = G.UIT.C,
 						config = {
 							minw = 0.1,
-							minh = 0.1
-						}
+							minh = 0.1,
+						},
 					},
 					MP.UI.BackgroundGrouping(localize("k_forces_lobby_options"), {
 						{
@@ -52,15 +52,15 @@ MP.Ruleset({
 								text = localize("k_yes"),
 								scale = 0.8,
 								colour = G.C.GREEN,
-							}
-						}
-					}, {col = true, text_scale = 0.6}),
+							},
+						},
+					}, { col = true, text_scale = 0.6 }),
 					{
 						n = G.UIT.C,
 						config = {
 							minw = 0.1,
-							minh = 0.1
-						}
+							minh = 0.1,
+						},
 					},
 					MP.UI.BackgroundGrouping(localize("k_forces_gamemode"), {
 						{
@@ -69,23 +69,23 @@ MP.Ruleset({
 								text = localize("k_attrition"),
 								scale = 0.8,
 								colour = G.C.GREEN,
-							}
-						}
-					}, {col = true, text_scale = 0.6})
+							},
+						},
+					}, { col = true, text_scale = 0.6 }),
 				},
 			},
 			{
 				n = G.UIT.R,
 				config = {
 					minw = 0.05,
-					minh = 0.05
-				}
+					minh = 0.05,
+				},
 			},
 			{
 				n = G.UIT.R,
 				config = {
 					align = "cl",
-					padding = 0.1
+					padding = 0.1,
 				},
 				nodes = {
 					{
@@ -94,7 +94,7 @@ MP.Ruleset({
 							text = localize("k_ranked_description"),
 							scale = 0.6,
 							colour = G.C.UI.TEXT_LIGHT,
-						}
+						},
 					},
 				},
 			},
@@ -105,7 +105,7 @@ MP.Ruleset({
 	is_disabled = function(self)
 		local required_version = "1.0.0~BETA-0506a"
 		if SMODS.version ~= required_version then
-			return localize({type = "variable", key="k_ruleset_disabled_smods_version", vars = {required_version}})
+			return localize({ type = "variable", key = "k_ruleset_disabled_smods_version", vars = { required_version } })
 		end
 		if not MP.INTEGRATIONS.TheOrder then
 			return localize("k_ruleset_disabled_the_order_required")
@@ -113,6 +113,7 @@ MP.Ruleset({
 		return false
 	end,
 	force_lobby_options = function(self)
+		MP.LOBBY.config.the_order = true
 		return true
-	end
+	end,
 }):inject()
