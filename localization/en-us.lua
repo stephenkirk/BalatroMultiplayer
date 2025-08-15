@@ -236,6 +236,7 @@ return {
 			b_lobby_info = "Lobby Info",
 			b_continue_singleplayer = "Continue in Singleplayer",
 			b_the_order_integration = "Enable The Order Integration",
+			b_fantoms_preview_integration = "Enable Preview",
 			b_view_nemesis_deck = "View Decks",
 			b_toggle_jokers = "Toggle Jokers",
 			b_skip_tutorial = "Skip Tutorial",
@@ -342,6 +343,8 @@ return {
 			k_your_deck = "Your Deck",
 			k_the_order_credit = "*Credit to @MathIsFun_",
 			k_the_order_integration_desc = "This will patch card creation to not be ante-based and use a single pool for every type/rarity",
+			k_fantoms_preview_credit = "*Credit to @Fantom, @Divvy",
+			k_fantoms_preview_integration_desc = "This will enable score and money preview before playing a hand",
 			k_requires_restart = "*Requires a restart to take effect",
 			k_new_weekly_ruleset = "A new weekly ruleset is available!",
 			k_currently_colon = "Currently: ",
@@ -383,7 +386,7 @@ return {
 			k_ante_number = "Ante #1#",
 			k_ante_range = "Ante #1#-#2#", -- For example, "Ante 1-2"
 			k_ante_min = "Ante #1#+", -- For example, "Ante 2+"
-			k_credits_list = "#1# and many more!" -- #1# gets replaced with a list of names
+			k_credits_list = "#1# and many more!", -- #1# gets replaced with a list of names
 		},
 		v_text = {
 			ch_c_hanging_chad_rework = { "{C:attention}Hanging Chad{} is {C:dark_edition}reworked" },
