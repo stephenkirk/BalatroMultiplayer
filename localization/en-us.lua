@@ -666,6 +666,8 @@ return {
 			k_lobby_advanced = "Advanced",
 			k_opts_pvp_start_round = "PVP Starts at Ante",
 			k_opts_pvp_timer = "Timer",
+			k_opts_experimental_timer = "Use Experimental Timer",
+			k_opts_timer_mode = "Economic Timer Mode",
 			k_opts_showdown_starting_antes = "Showdown Starts at Ante",
 			k_opts_pvp_timer_increment = "Timer Increment",
 			k_opts_pvp_countdown_seconds = "PvP Countdown Seconds",

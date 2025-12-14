@@ -120,6 +120,12 @@ function MP.reset_lobby_config(persist_ruleset_and_gamemode)
 		multiplayer_jokers = true,
 		timer = true,
 		timer_forgiveness = 0,
+		economic_timer = false,
+		economic_timer_mode = "standard",
+		economic_timer_hand_threshold = 30,
+		economic_timer_shop_threshold = 90,
+		economic_timer_drain_rate = 10, -- $1 per N seconds over threshold
+		economic_timer_zero_grace = 60,
 		forced_config = false,
 		preview_disabled = false,
 		legacy_smallworld = false,
@@ -175,6 +181,11 @@ function MP.reset_game_states()
 		wait_for_enemys_furthest_blind = false,
 		disable_live_and_timer_hud = false,
 		timers_forgiven = 0,
+		economic_timer_hand_elapsed = 0,
+		economic_timer_shop_elapsed = 0,
+		economic_timer_phase = "none", -- "hand" | "shop" | "none"
+		economic_timer_drain_acc = 0,
+		economic_timer_zero_dollar_elapsed = 0,
 		stats = {
 			reroll_count = 0,
 			reroll_cost_total = 0,

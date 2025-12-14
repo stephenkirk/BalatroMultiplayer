@@ -520,3 +520,52 @@ MP.timer_event = Event({
 		MP.timer_event.start_timer = false
 	end,
 })
+
+MP.economic_timer_event = Event({
+	blockable = false,
+	blocking = false,
+	pause_force = true,
+	no_delete = true,
+	trigger = "after",
+	delay = 1,
+	timer = "UPTIME",
+	func = function()
+		if not G or not G.GAME then return true end
+		if not MP.LOBBY.config.economic_timer then return true end
+
+		local phase_active = MP.GAME.economic_timer_phase ~= "none"
+		if phase_active then
+			local threshold = MP.GAME.economic_timer_phase == "hand"
+					and MP.LOBBY.config.economic_timer_hand_threshold
+				or MP.LOBBY.config.economic_timer_shop_threshold
+			local key = MP.GAME.economic_timer_phase == "hand"
+					and "economic_timer_hand_elapsed"
+				or "economic_timer_shop_elapsed"
+
+			MP.GAME[key] = MP.GAME[key] + 1
+
+			if MP.GAME[key] > threshold then
+				MP.GAME.economic_timer_drain_acc = MP.GAME.economic_timer_drain_acc + 1
+				if MP.GAME.economic_timer_drain_acc >= MP.LOBBY.config.economic_timer_drain_rate then
+					MP.GAME.economic_timer_drain_acc = 0
+					if G.GAME.dollars > 0 then
+						ease_dollars(-1)
+						play_sound("generic1", 0.6, 0.3)
+					end
+				end
+			end
+		end
+
+		if G.GAME.dollars <= 0 then
+			MP.GAME.economic_timer_zero_dollar_elapsed = MP.GAME.economic_timer_zero_dollar_elapsed + 1
+			if MP.GAME.economic_timer_zero_dollar_elapsed >= MP.LOBBY.config.economic_timer_zero_grace then
+				MP.GAME.economic_timer_zero_dollar_elapsed = 0
+				MP.ACTIONS.fail_timer()
+			end
+		else
+			MP.GAME.economic_timer_zero_dollar_elapsed = 0
+		end
+
+		MP.economic_timer_event.start_timer = false
+	end,
+})

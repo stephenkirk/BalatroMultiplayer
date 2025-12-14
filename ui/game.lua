@@ -915,15 +915,19 @@ function Game:update_hand_played(dt)
 
 	if not G.STATE_COMPLETE then
 		G.STATE_COMPLETE = true
-		G.E_MANAGER:add_event(Event({
-			trigger = "immediate",
-			func = function()
-				MP.ACTIONS.play_hand(G.GAME.chips, G.GAME.current_round.hands_left)
-				-- For now, never advance to next round
-				if G.GAME.current_round.hands_left < 1 then
-					attention_text({
-						scale = 0.8,
-						text = localize("k_wait_enemy"),
+			G.E_MANAGER:add_event(Event({
+				trigger = "immediate",
+				func = function()
+					MP.ACTIONS.play_hand(G.GAME.chips, G.GAME.current_round.hands_left)
+					if MP.LOBBY.config.economic_timer then
+						MP.GAME.economic_timer_hand_elapsed = 0
+						MP.GAME.economic_timer_drain_acc = 0
+					end
+					-- For now, never advance to next round
+					if G.GAME.current_round.hands_left < 1 then
+						attention_text({
+							scale = 0.8,
+							text = localize("k_wait_enemy"),
 						hold = 5,
 						align = "cm",
 						offset = { x = 0, y = -1.5 },
@@ -1646,6 +1650,14 @@ end
 
 local update_selecting_hand_ref = Game.update_selecting_hand
 function Game:update_selecting_hand(dt)
+	if MP.LOBBY.code and MP.LOBBY.config.economic_timer then
+		if MP.GAME.economic_timer_phase ~= "hand" then
+			MP.GAME.economic_timer_phase = "hand"
+			MP.GAME.economic_timer_drain_acc = 0
+			G.E_MANAGER:add_event(MP.economic_timer_event)
+		end
+	end
+
 	if
 		G.GAME.current_round.hands_left < G.GAME.round_resets.hands
 		and #G.hand.cards < 1
@@ -1853,6 +1865,14 @@ end
 
 local update_shop_ref = Game.update_shop
 function Game:update_shop(dt)
+	if MP.LOBBY.code and MP.LOBBY.config.economic_timer then
+		if MP.GAME.economic_timer_phase ~= "shop" then
+			MP.GAME.economic_timer_phase = "shop"
+			MP.GAME.economic_timer_drain_acc = 0
+			G.E_MANAGER:add_event(MP.economic_timer_event)
+		end
+	end
+
 	local updated_location = false
 	if MP.LOBBY.code and not G.STATE_COMPLETE and not updated_location and not G.GAME.USING_RUN then
 		updated_location = true
@@ -1866,6 +1886,14 @@ end
 
 local update_blind_select_ref = Game.update_blind_select
 function Game:update_blind_select(dt)
+	if MP.LOBBY.code and MP.LOBBY.config.economic_timer then
+		if MP.GAME.economic_timer_phase ~= "shop" then
+			MP.GAME.economic_timer_phase = "shop"
+			MP.GAME.economic_timer_drain_acc = 0
+			G.E_MANAGER:add_event(MP.economic_timer_event)
+		end
+	end
+
 	local updated_location = false
 	if MP.LOBBY.code and not G.STATE_COMPLETE and not updated_location then
 		updated_location = true
@@ -1882,6 +1910,10 @@ function G.FUNCS.select_blind(e)
 	MP.GAME.prevent_eval = false
 	select_blind_ref(e)
 	if MP.LOBBY.code then
+		if MP.LOBBY.config.economic_timer then
+			MP.GAME.economic_timer_shop_elapsed = 0
+			MP.GAME.economic_timer_phase = "none"
+		end
 		MP.GAME.ante_key = tostring(math.random())
 		MP.ACTIONS.play_hand(0, G.GAME.round_resets.hands)
 		MP.ACTIONS.new_round()

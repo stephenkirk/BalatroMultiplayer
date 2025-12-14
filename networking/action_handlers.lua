@@ -304,6 +304,10 @@ local function action_lobby_options(options)
 			or k == "showdown_starting_antes"
 			or k == "pvp_countdown_seconds"
 			or k == "timer_forgiveness"
+			or k == "economic_timer_hand_threshold"
+			or k == "economic_timer_shop_threshold"
+			or k == "economic_timer_drain_rate"
+			or k == "economic_timer_zero_grace"
 		then
 			parsed_v = tonumber(v)
 		end
