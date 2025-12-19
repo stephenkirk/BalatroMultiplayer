@@ -6,9 +6,9 @@ Alternative to the instant-fail PvP timer. Trades money for time; lose a life wh
 
 | Phase | When | Grace Period | Notes |
 |-------|------|--------------|-------|
-| **BLIND** | Playing non-PvP blinds (small/big) | 60s _or_ `15s × starting_hands` | Resets at end of blind |
+| **BLIND** | Playing non-PvP blinds (small/big) | 60s | Resets at end of blind |
 | **SHOP** | Shop + blind selection screens | 90s | Resets when selecting a blind |
-| **PVP** | Playing PvP blinds (not ahead) | 15s per hand | Only ticks if behind/tied |
+| **PVP** | Playing PvP blinds (not ahead) | 15s per hand | Resets after each hand. Only ticks if behind/tied |
 
 ## Core Loop
 
@@ -22,6 +22,15 @@ Alternative to the instant-fail PvP timer. Trades money for time; lose a life wh
 2. **Overtime**: Grace exhausted. Money drains. **30 seconds max** to prevent sandbagging.
 3. Overtime expires → **lose a life**.
 
+
+## Why This Over Instant-Fail Timer
+
+1. **Predictable game length**: Max time per ante/game is calculable (grace + 30s overtime cap)
+2. **Player agency**: Time pressure becomes a resource to manage, not a binary fail state
+3. **No animation budgeting:** Current timer means mentally reserving time for end of blind / pack animations you haven't triggered yet. Economic timer lets you play the blind, not the clock.
+4. **Integrated into economy**: Time is money - literally. Fits Balatro's economic game loop.
+5. **Tunable**: If something feels bad, it's a numbers tweak away
+
 ## Overtime Mechanics
 
 **Duration**: 30 seconds. When it runs out, you lose a life.
@@ -30,10 +39,7 @@ Alternative to the instant-fail PvP timer. Trades money for time; lose a life wh
 - Base: `ceil(0.04 × dollars)`, minimum $1 (i.e., $1 per $25 you have, rounded up)
 - Drains every N seconds (TBD - every 5s? 10s?)
 
-**Ante scaling (TBD)**: Which dimension scales?
-- Option A: Drain $2/$3/etc per tick at higher antes
-- Option B: Faster tick rate at higher antes
-- Option C: Shorter grace periods at higher antes
+**Ante scaling (TBD)**: Faster tick rate at higher antes
 
 ## State
 
@@ -76,7 +82,5 @@ Future: presets for grace periods, drain rates, ante scaling.
 
 ## Open Questions
 
-1. **Grace period formula**: Fixed 60s or `15s × hands`? Latter creates deck interactions (Grabber = more time, Black Deck = pressure).
-2. **Ante scaling**: Which dimension scales? (drain amount, drain rate, grace period)
-3. **PvP phase**: Same system with tighter grace, or different rules entirely?
-4. **Vagabond**: Triggers at $0 - does this interact with overtime drain?
+3. **PvP phase**: Same system with tighter grace, or different rules entirely? (15s grace + 30s overtime?)
+4. **Vagabond interaction**: Vagabond benefits from <$4. Overtime drain could accidentally buff it. Overtime cap helps, but worth watching.
