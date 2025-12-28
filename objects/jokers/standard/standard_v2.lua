@@ -1,4 +1,3 @@
--- This is the example for defining a center rework
 MP.ReworkCenter({
 	key = "j_idol",
 	ruleset = MP.UTILS.get_standard_rulesets(),
@@ -10,7 +9,40 @@ MP.ReworkCenter({
 	ruleset = MP.UTILS.get_standard_rulesets(),
 	rarity = 1,
 	cost = 5,
-	-- todo diff calc
+	loc_vars = function(self, info_queue, card)
+		return {
+			key = self.key .. "_standard",
+			-- todo might still have to return this
+		}
+	end,
+	calculate = function(self, card, context)
+		if context.first_hand_drawn then
+			local eval = function()
+				return not MP.is_pvp_boss()
+			end
+			juice_card_until(card, eval, true)
+		end
+		if context.repetition and context.cardarea == G.play and not MP.is_pvp_boss() then
+			return {
+				repetitions = 1,
+			}
+		end
+		if context.after and not context.blueprint and not MP.is_pvp_boss() then
+			if card.ability.extra.hands_left - 1 <= 0 then
+				SMODS.destroy_cards(card, nil, nil, true)
+				return {
+					message = localize("k_drank_ex"),
+					colour = G.C.FILTER,
+				}
+			else
+				card.ability.extra.hands_left = card.ability.extra.hands_left - 1
+				return {
+					message = card.ability.extra.hands_left .. "",
+					colour = G.C.FILTER,
+				}
+			end
+		end
+	end,
 })
 
 MP.ReworkCenter({
@@ -18,40 +50,53 @@ MP.ReworkCenter({
 	ruleset = MP.UTILS.get_standard_rulesets(),
 	rarity = 1,
 	cost = 5,
+	config = { extra = { h_size = 5, h_mod = 1, effect_disabled = true } },
 	loc_vars = function(self, info_queue, card)
 		return {
 			key = self.key .. "_standard",
-			vars = { card.ability.extra.xmult },
+			vars = { card.ability.extra.h_size, card.ability.extra.h_mod, card.ability.extra.effect_disabled },
 		}
 	end,
 	calculate = function(self, card, context)
-		-- TODO
-		-- If in PvP,
-		-- 1. This should not give effect
-		-- 2. Hand size should not be reduced at end of round
-		-- Use G.hand:change_size(-card.ability.extra.h_size) for that
-
+		if context.first_hand_drawn and MP.is_pvp_boss() and not context.blueprint then
+			G.hand:change_size(-card.ability.extra.h_size)
+			card.ability.extra.effect_disabled = true
+		end
 		if context.end_of_round and context.game_over == false and context.main_eval and not context.blueprint then
-			if card.ability.extra.h_size - card.ability.extra.h_mod <= 0 then
-				SMODS.destroy_cards(card, nil, nil, true)
-				return {
-					message = localize("k_eaten_ex"),
-					colour = G.C.FILTER,
-				}
+			if MP.is_pvp_boss() then
+				G.hand:change_size(card.ability.extra.h_size)
+				card.ability.extra.effect_disabled = false
 			else
-				-- See note about SMODS Scaling Manipulation on the wiki
-				card.ability.extra.h_size = card.ability.extra.h_size - card.ability.extra.h_mod
-				G.hand:change_size(-card.ability.extra.h_mod)
-				return {
-					message = localize({
-						type = "variable",
-						key = "a_handsize_minus",
-						vars = { card.ability.extra.h_mod },
-					}),
-					colour = G.C.FILTER,
-				}
+				if card.ability.extra.h_size - card.ability.extra.h_mod <= 0 then
+					SMODS.destroy_cards(card, nil, nil, true)
+					return {
+						message = localize("k_eaten_ex"),
+						colour = G.C.FILTER,
+					}
+				else
+					card.ability.extra.h_size = card.ability.extra.h_size - card.ability.extra.h_mod
+					G.hand:change_size(-card.ability.extra.h_mod)
+					return {
+						message = localize({
+							type = "variable",
+							key = "a_handsize_minus",
+							vars = { card.ability.extra.h_mod },
+						}),
+						colour = G.C.FILTER,
+					}
+				end
 			end
 		end
+	end,
+	add_to_deck = function(self, card, from_debuff)
+		if not MP.is_pvp_boss() then
+			G.hand:change_size(card.ability.extra.h_size)
+		else
+			card.ability.extra.effect_disabled = true
+		end
+	end,
+	remove_from_deck = function(self, card, from_debuff)
+		if not card.ability.extra.effect_disabled then G.hand:change_size(-card.ability.extra.h_size) end
 	end,
 })
 
