@@ -9,6 +9,7 @@ MP.ReworkCenter({
 	ruleset = MP.UTILS.get_standard_rulesets(),
 	rarity = 1,
 	cost = 5,
+	config = { hands_left = 10, effect_disabled = false },
 	loc_vars = function(self, info_queue, card)
 		return {
 			key = self.key .. "_standard",
@@ -17,6 +18,7 @@ MP.ReworkCenter({
 	end,
 	calculate = function(self, card, context)
 		if context.first_hand_drawn then
+			if MP.is_pvp_boss() then card.ability.extra.effect_disabled = true end
 			local eval = function()
 				return not MP.is_pvp_boss()
 			end
@@ -42,6 +44,12 @@ MP.ReworkCenter({
 				}
 			end
 		end
+		if context.end_of_round and context.game_over == false and context.main_eval then
+			card.ability.extra.effect_disabled = false
+		end
+	end,
+	add_to_deck = function(self, card, from_debuff)
+		if MP.is_pvp_boss() then card.ability.extra.effect_disabled = true end
 	end,
 })
 
@@ -50,7 +58,7 @@ MP.ReworkCenter({
 	ruleset = MP.UTILS.get_standard_rulesets(),
 	rarity = 1,
 	cost = 5,
-	config = { extra = { h_size = 5, h_mod = 1, effect_disabled = true } },
+	config = { extra = { h_size = 5, h_mod = 1, effect_disabled = false } },
 	loc_vars = function(self, info_queue, card)
 		return {
 			key = self.key .. "_standard",
