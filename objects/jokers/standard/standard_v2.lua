@@ -5,6 +5,16 @@ MP.ReworkCenter({
 })
 
 MP.ReworkCenter({
+	key = "j_golden_ticket",
+	ruleset = MP.UTILS.get_standard_rulesets(),
+	rarity = 2,
+	cost = 6,
+	in_pool = function(self, args)
+		return true
+	end,
+})
+
+MP.ReworkCenter({
 	key = "j_selzer",
 	ruleset = MP.UTILS.get_standard_rulesets(),
 	rarity = 1,
