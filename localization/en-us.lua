@@ -30,9 +30,20 @@ return {
 			j_mp_selzer_standard = {
 				name = "Seltzer",
 				text = {
-					"Draw {C:attention}+#1#{} cards{}",
-					"and discard {C:attention}+#2#{} cards{}",
-					"at the start of your turn",
+					"Retrigger all",
+					"cards played for",
+					"the next {C:attention}#1#{} hands",
+					"Disabled in {C:attention}PvP Blind",
+				},
+			},
+
+			j_mp_turtle_bean_standard = {
+				name = "Turtle Bean",
+				text = {
+					"{C:attention}+#1#{} hand size,",
+					"reduces by",
+					"{C:red}#2#{} every round",
+					"Disabled in {C:attention}PvP Blind",
 				},
 			},
 			j_broken = {
