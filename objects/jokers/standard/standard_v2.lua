@@ -2,7 +2,7 @@ MP.ReworkCenter("j_idol", MP.UTILS.get_standard_rulesets(), nil, {
 	config = { extra = 1.5 },
 })
 
-MP.ReworkCenter("j_golden_ticket", MP.UTILS.get_standard_rulesets(), nil, {
+MP.ReworkCenter("j_ticket", MP.UTILS.get_standard_rulesets(), nil, {
 	rarity = 2,
 	cost = 6,
 	in_pool = function(self, args)
@@ -10,49 +10,49 @@ MP.ReworkCenter("j_golden_ticket", MP.UTILS.get_standard_rulesets(), nil, {
 	end,
 })
 
--- todo below doesn't work and i have no idea why
+-- todo fix localization text
 MP.ReworkCenter("j_selzer", MP.UTILS.get_standard_rulesets(), nil, {
 	rarity = 1,
 	cost = 5,
-	-- config = { extra = { hands_left = 10, effect_disabled = false } },
-	-- loc_vars = function(self, info_queue, card)
-	-- 	return { vars = { card.ability.extra.hands_left, card.ability.extra.effect_disabled } }
-	-- end,
-	-- calculate = function(self, card, context)
-	-- 	if context.first_hand_drawn then
-	-- 		if MP.is_pvp_boss() then card.ability.extra.effect_disabled = true end
-	-- 		local eval = function()
-	-- 			return not MP.is_pvp_boss()
-	-- 		end
-	-- 		juice_card_until(card, eval, true)
-	-- 	end
-	-- 	if context.repetition and context.cardarea == G.play and not MP.is_pvp_boss() then
-	-- 		return {
-	-- 			repetitions = 1,
-	-- 		}
-	-- 	end
-	-- 	if context.after and not context.blueprint and not MP.is_pvp_boss() then
-	-- 		if card.ability.extra.hands_left - 1 <= 0 then
-	-- 			SMODS.destroy_cards(card, nil, nil, true)
-	-- 			return {
-	-- 				message = localize("k_drank_ex"),
-	-- 				colour = G.C.FILTER,
-	-- 			}
-	-- 		else
-	-- 			card.ability.extra.hands_left = card.ability.extra.hands_left - 1
-	-- 			return {
-	-- 				message = card.ability.extra.hands_left .. "",
-	-- 				colour = G.C.FILTER,
-	-- 			}
-	-- 		end
-	-- 	end
-	-- 	if context.end_of_round and context.game_over == false and context.main_eval then
-	-- 		card.ability.extra.effect_disabled = false
-	-- 	end
-	-- end,
-	-- add_to_deck = function(self, card, from_debuff)
-	-- 	if MP.is_pvp_boss() then card.ability.extra.effect_disabled = true end
-	-- end,
+	config = { extra = { hands_left = 10, effect_disabled = false } },
+	loc_vars = function(self, info_queue, card)
+		return { vars = { card.ability.extra.hands_left, card.ability.extra.effect_disabled } }
+	end,
+	calculate = function(self, card, context)
+		if context.first_hand_drawn then
+			if MP.is_pvp_boss() then card.ability.extra.effect_disabled = true end
+			local eval = function()
+				return not MP.is_pvp_boss()
+			end
+			juice_card_until(card, eval, true)
+		end
+		if context.repetition and context.cardarea == G.play and not MP.is_pvp_boss() then
+			return {
+				repetitions = 1,
+			}
+		end
+		if context.after and not context.blueprint and not MP.is_pvp_boss() then
+			if card.ability.extra.hands_left - 1 <= 0 then
+				SMODS.destroy_cards(card, nil, nil, true)
+				return {
+					message = localize("k_drank_ex"),
+					colour = G.C.FILTER,
+				}
+			else
+				card.ability.extra.hands_left = card.ability.extra.hands_left - 1
+				return {
+					message = card.ability.extra.hands_left .. "",
+					colour = G.C.FILTER,
+				}
+			end
+		end
+		if context.end_of_round and context.game_over == false and context.main_eval then
+			card.ability.extra.effect_disabled = false
+		end
+	end,
+	add_to_deck = function(self, card, from_debuff)
+		if MP.is_pvp_boss() then card.ability.extra.effect_disabled = true end
+	end,
 })
 
 -- MP.ReworkCenter("j_turtle_bean", MP.UTILS.get_standard_rulesets(), "j_mp_turtle_bean_standard", {
