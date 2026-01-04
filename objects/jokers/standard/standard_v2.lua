@@ -96,14 +96,18 @@ MP.ReworkCenter("j_turtle_bean", MP.UTILS.get_standard_rulesets(), "j_mp_turtle_
 			end
 		end
 	end,
+	-- ugh the original `add to deck` effect for bean runs (+5 hand size) and there's nothing we can do about it
+	-- which means bean now delivers a massive 10 hand size! pog
 	add_to_deck = function(self, card, from_debuff)
 		if not MP.is_pvp_boss() then
 			G.hand:change_size(card.ability.extra.h_size)
 		else
 			card.ability.extra.effect_disabled = true
 		end
+		return nil
 	end,
 	remove_from_deck = function(self, card, from_debuff)
 		if not card.ability.extra.effect_disabled then G.hand:change_size(-card.ability.extra.h_size) end
+		return nil
 	end,
 })

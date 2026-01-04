@@ -1,0 +1,28 @@
+[manifest]
+version = "1.0"
+dump_lua = true
+priority = 133767
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = "obj:add_to_deck(self, from_debuff)"
+position = "at"
+payload = '''
+if obj:add_to_deck(self, from_debuff) then
+    return
+end
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = "obj:remove_from_deck(self, from_debuff)"
+position = "at"
+payload = '''
+if obj:remove_from_deck(self, from_debuff) then
+    return
+end
+'''
+match_indent = true
