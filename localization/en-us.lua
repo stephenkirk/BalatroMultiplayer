@@ -27,6 +27,14 @@ return {
 			},
 		},
 		Joker = {
+			j_mp_selzer_standard = {
+				name = "Seltzer",
+				text = {
+					"Draw {C:attention}+#1#{} cards{}",
+					"and discard {C:attention}+#2#{} cards{}",
+					"at the start of your turn",
+				},
+			},
 			j_broken = {
 				name = "BROKEN",
 				text = {
