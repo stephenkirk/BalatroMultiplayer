@@ -57,6 +57,7 @@ MP.ReworkCenter("j_selzer", MP.UTILS.get_standard_rulesets(), "j_mp_selzer_stand
 
 MP.ReworkCenter("j_turtle_bean", MP.UTILS.get_standard_rulesets(), "j_mp_turtle_bean_standard", {
 	rarity = 1,
+	name = "Turtle Goose",
 	cost = 5,
 	config = { extra = { h_size = 5, h_mod = 1, effect_disabled = false } },
 	loc_vars = function(self, info_queue, card)
@@ -98,6 +99,7 @@ MP.ReworkCenter("j_turtle_bean", MP.UTILS.get_standard_rulesets(), "j_mp_turtle_
 	end,
 	-- ugh the original `add to deck` effect for bean runs (+5 hand size) and there's nothing we can do about it
 	-- which means bean now delivers a massive 10 hand size! pog
+	-- asd
 	add_to_deck = function(self, card, from_debuff)
 		if not MP.is_pvp_boss() then
 			G.hand:change_size(card.ability.extra.h_size)

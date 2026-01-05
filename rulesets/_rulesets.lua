@@ -136,6 +136,9 @@ function MP.ReworkCenter(key, ruleset, loc_key, args)
 				center[prefix .. k] = v
 				if not center["mp_vanilla_" .. k] then center["mp_vanilla_" .. k] = center[k] or "NULL" end
 			end
+			if k == "add_to_deck" then
+				-- something about renaming to change behaviour
+			end
 		end
 
 		-- Auto-inject generate_ui when adding loc_vars to vanilla centers
