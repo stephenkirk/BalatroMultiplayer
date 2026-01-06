@@ -1,7 +1,8 @@
 -- old-ish
-MP.ReworkCenter("j_idol", {
+MP.ReworkCenter("j_idol", MP.UTILS.get_standard_rulesets(), nil, {
 	rulesets = MP.UTILS.get_standard_rulesets(),
 	config = { extra = 1.5 },
+	enhancement_gate = "m_glass",
 })
 
 -- ugh we gonna have to reimplement this aren't we
@@ -9,6 +10,7 @@ MP.ReworkCenter("j_ticket", MP.UTILS.get_standard_rulesets(), nil, {
 	-- name = "Ticket (Standard)",
 	rarity = 2,
 	cost = 6,
+	enhancement_gate = false,
 })
 
 MP.ReworkCenter("j_selzer", MP.UTILS.get_standard_rulesets(), "j_mp_selzer_standard", {
