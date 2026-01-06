@@ -1,7 +1,8 @@
+# This is a full-line comment
 [manifest]
 version = "1.0"
 dump_lua = true
-priority = 133767
+priority = 1333337
 
 [[patches]]
 [patches.pattern]

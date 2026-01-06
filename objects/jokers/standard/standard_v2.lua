@@ -1,19 +1,20 @@
 -- old-ish
-MP.ReworkCenter("j_idol", MP.UTILS.get_standard_rulesets(), nil, {
+MP.ReworkCenter("j_idol", {
 	rulesets = MP.UTILS.get_standard_rulesets(),
 	config = { extra = 1.5 },
-	enhancement_gate = "m_glass",
 })
 
 -- ugh we gonna have to reimplement this aren't we
-MP.ReworkCenter("j_ticket", MP.UTILS.get_standard_rulesets(), nil, {
-	-- name = "Ticket (Standard)",
+MP.ReworkCenter("j_ticket", {
+	rulesets = MP.UTILS.get_standard_rulesets(),
 	rarity = 2,
 	cost = 6,
 	enhancement_gate = false,
 })
 
-MP.ReworkCenter("j_selzer", MP.UTILS.get_standard_rulesets(), "j_mp_selzer_standard", {
+MP.ReworkCenter("j_selzer", {
+	rulesets = MP.UTILS.get_standard_rulesets(),
+	loc_key = "j_mp_selzer_standard",
 	rarity = 1,
 	cost = 5,
 	config = { extra = { hands_left = 10, effect_disabled = false } },
@@ -57,13 +58,10 @@ MP.ReworkCenter("j_selzer", MP.UTILS.get_standard_rulesets(), "j_mp_selzer_stand
 	end,
 })
 
-MP.ReworkCenter("j_turtle_bean", MP.UTILS.get_standard_rulesets(), "j_mp_turtle_bean_standard", {
+MP.ReworkCenter("j_turtle_bean", {
+	rulesets = MP.UTILS.get_standard_rulesets(),
+	loc_key = "j_mp_turtle_bean_standard",
 	rarity = 1,
-
-	-- we invoke arcane smods magic
-	-- this can probably be abstracted better
-	-- but for now just pretend this is something else and reimplement it
-	name = "Turtle Bean (Standard)",
 	cost = 5,
 	config = { extra = { h_size = 5, h_mod = 1, effect_disabled = false } },
 	loc_vars = function(self, info_queue, card)
@@ -103,18 +101,16 @@ MP.ReworkCenter("j_turtle_bean", MP.UTILS.get_standard_rulesets(), "j_mp_turtle_
 			end
 		end
 	end,
-
-	-- ugh the original `add to deck` effect for bean runs (+5 hand size) and there's nothing we can do about it
-	-- which means bean now delivers a massive 10 hand size! pog
-	-- alternatively: reverse the `add_to_deck` effect on pickup?
 	add_to_deck = function(self, card, from_debuff)
 		if not MP.is_pvp_boss() then
 			G.hand:change_size(card.ability.extra.h_size)
 		else
 			card.ability.extra.effect_disabled = true
 		end
+		return true -- magic - override vanilla behavior
 	end,
 	remove_from_deck = function(self, card, from_debuff)
 		if not card.ability.extra.effect_disabled then G.hand:change_size(-card.ability.extra.h_size) end
+		return true -- magic - override vanilla behavior
 	end,
 })
