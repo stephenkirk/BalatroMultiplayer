@@ -1,4 +1,5 @@
--- Ouija
+-- ouija: vanilla's "-1 hand size" is permanent scaling punishment for a mediocre effect.
+-- rework: destroy 3 cards, convert remaining hand to same rank.
 SMODS.Consumable({
 	key = "ouija_sandbox",
 	set = "Spectral",

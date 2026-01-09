@@ -1,10 +1,14 @@
--- old-ish
+-- idol: X2 → X1.5. not broken because it's random - broken because it centralizes
+-- the entire meta. every decision becomes "did i get idol / am i playing around idol"
+-- straight nerf, no sweeteners.
 MP.ReworkCenter("j_idol", {
 	rulesets = MP.UTILS.get_standard_rulesets(),
 	config = { extra = 1.5 },
 })
 
--- ugh we gonna have to reimplement this aren't we
+-- golden ticket: common → uncommon. ~3x rarer in shops (1.15% → 0.40%).
+-- also removed gold card gating - missing early gold card was already polarizing,
+-- making ticket rarer would make that worse.
 MP.ReworkCenter("j_ticket", {
 	rulesets = MP.UTILS.get_standard_rulesets(),
 	rarity = 2,
@@ -12,6 +16,10 @@ MP.ReworkCenter("j_ticket", {
 	enhancement_gate = false,
 })
 
+-- seltzer: uncommon → common, disabled in pvp. 10 uses then self-destructs.
+-- common rarity makes this an eco card now - cheap shop pickup for pve value.
+-- pvp disable because players find it at different times, so one player's seltzer
+-- expires mid-match while the other's is still live.
 MP.ReworkCenter("j_selzer", {
 	rulesets = MP.UTILS.get_standard_rulesets(),
 	loc_key = "j_mp_selzer_standard",
@@ -58,6 +66,10 @@ MP.ReworkCenter("j_selzer", {
 	end,
 })
 
+-- turtle bean: same treatment as seltzer. uncommon → common eco card, disabled in pvp.
+-- hand size manipulation in head-to-head is another coinflip vector - who found it
+-- earlier, whose degrades first. preserves pve identity while removing the
+-- multiplayer timing lottery.
 MP.ReworkCenter("j_turtle_bean", {
 	rulesets = MP.UTILS.get_standard_rulesets(),
 	loc_key = "j_mp_turtle_bean_standard",
@@ -114,3 +126,8 @@ MP.ReworkCenter("j_turtle_bean", {
 		return true -- magic - override vanilla behavior
 	end,
 })
+
+-- comeback money nerf
+-- if you die in pve then you get half the comeback money
+-- some logic can be found in defensive joker rework (for stake checkups)
+-- we also need some weird logic to ensure this toggles on and off
