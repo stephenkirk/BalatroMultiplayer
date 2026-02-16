@@ -1,12 +1,11 @@
--- ouija: vanilla's "-1 hand size" is permanent scaling punishment for a mediocre effect.
--- rework: destroy 3 cards, convert remaining hand to same rank.
+-- TODO: needs to be wired up to all rulesets and needs a name change
 SMODS.Consumable({
 	key = "ouija_sandbox",
 	set = "Spectral",
 	pos = { x = 7, y = 4 },
 	config = { extra = { destroy = 3 }, mp_sticker_balanced = true },
 	in_pool = function(self)
-		return MP.is_ruleset_active("sandbox")
+		return MP.is_ruleset_active("sandbox") or MP.UTILS.is_standard_ruleset()
 	end,
 	loc_vars = function(self, info_queue, card)
 		return { vars = { card.ability.extra.destroy } }

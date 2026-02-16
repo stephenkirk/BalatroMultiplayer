@@ -1,34 +1,83 @@
--- idol: X2 → X1.5. not broken because it's random - broken because it centralizes
--- the entire meta. every decision becomes "did i get idol / am i playing around idol"
--- straight nerf, no sweeteners.
-MP.ReworkCenter("j_idol", {
-	rulesets = MP.UTILS.get_standard_rulesets(),
-	config = { extra = 1.5 },
-})
-
--- golden ticket: common → uncommon. ~3x rarer in shops (1.15% → 0.40%).
--- also removed gold card gating - missing early gold card was already polarizing,
--- making ticket rarer would make that worse.
-MP.ReworkCenter("j_ticket", {
-	rulesets = MP.UTILS.get_standard_rulesets(),
+-- Idol
+SMODS.Joker({
+	key = "idol_standard",
+	unlocked = false,
+	blueprint_compat = true,
 	rarity = 2,
 	cost = 6,
-	enhancement_gate = false,
+	pos = { x = 6, y = 7 },
+	config = { extra = { xmult = 1.5 } },
+	loc_vars = function(self, info_queue, card)
+		local idol_card = G.GAME.current_round.idol_card or { rank = "Ace", suit = "Spades" }
+		return {
+			vars = {
+				card.ability.extra.xmult,
+				localize(idol_card.rank, "ranks"),
+				localize(idol_card.suit, "suits_plural"),
+				colours = { G.C.SUITS[idol_card.suit] },
+			},
+		}
+	end,
+	calculate = function(self, card, context)
+		if
+			context.individual
+			and context.cardarea == G.play
+			and context.other_card:get_id() == G.GAME.current_round.idol_card.id
+			and context.other_card:is_suit(G.GAME.current_round.idol_card.suit)
+		then
+			return {
+				xmult = card.ability.extra.xmult,
+			}
+		end
+	end,
 })
 
--- seltzer: uncommon → common, disabled in pvp. 10 uses then self-destructs.
--- common rarity makes this an eco card now - cheap shop pickup for pve value.
--- pvp disable because players find it at different times, so one player's seltzer
--- expires mid-match while the other's is still live.
-MP.ReworkCenter("j_selzer", {
-	rulesets = MP.UTILS.get_standard_rulesets(),
-	loc_key = "j_mp_selzer_standard",
+SMODS.Joker({
+	key = "ticket_standard",
+	unlocked = false,
+	blueprint_compat = true,
+	rarity = 2,
+	cost = 6,
+	pos = { x = 5, y = 3 },
+	config = { extra = { dollars = 4 } },
+	loc_vars = function(self, info_queue, card)
+		info_queue[#info_queue + 1] = G.P_CENTERS.m_gold
+		return { vars = { card.ability.extra.dollars } }
+	end,
+	calculate = function(self, card, context)
+		if
+			context.individual
+			and context.cardarea == G.play
+			and SMODS.has_enhancement(context.other_card, "m_gold")
+		then
+			G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + card.ability.extra.dollars
+			return {
+				dollars = card.ability.extra.dollars,
+				func = function() -- This is for timing purposes, it runs after the dollar manipulation
+					G.E_MANAGER:add_event(Event({
+						func = function()
+							G.GAME.dollar_buffer = 0
+							return true
+						end,
+					}))
+				end,
+			}
+		end
+	end,
+})
+
+SMODS.Joker({
+	key = "seltzer_standard",
+	blueprint_compat = true,
+	eternal_compat = false,
 	rarity = 1,
 	cost = 5,
-	config = { extra = { hands_left = 10, effect_disabled = false } },
+	pos = { x = 3, y = 15 },
+	config = { extra = { hands_left = 10 } },
 	loc_vars = function(self, info_queue, card)
 		return { vars = { card.ability.extra.hands_left } }
 	end,
+	-- todo replace with new stuff from standard v2
 	calculate = function(self, card, context)
 		if context.first_hand_drawn then
 			if MP.is_pvp_boss() then card.ability.extra.effect_disabled = true end
@@ -61,26 +110,18 @@ MP.ReworkCenter("j_selzer", {
 			card.ability.extra.effect_disabled = false
 		end
 	end,
-	add_to_deck = function(self, card, from_debuff)
-		if MP.is_pvp_boss() then card.ability.extra.effect_disabled = true end
-	end,
 })
 
--- turtle bean: same treatment as seltzer. uncommon → common eco card, disabled in pvp.
--- hand size manipulation in head-to-head is another coinflip vector - who found it
--- earlier, whose degrades first. preserves pve identity while removing the
--- multiplayer timing lottery.
-MP.ReworkCenter("j_turtle_bean", {
-	rulesets = MP.UTILS.get_standard_rulesets(),
-	loc_key = "j_mp_turtle_bean_standard",
+SMODS.Joker({
+	key = "turtle_bean_standard",
+	blueprint_compat = false,
+	eternal_compat = false,
 	rarity = 1,
 	cost = 5,
-	config = { extra = { h_size = 5, h_mod = 1, effect_disabled = false } },
+	pos = { x = 4, y = 13 },
+	config = { extra = { h_size = 5, h_mod = 1 } },
 	loc_vars = function(self, info_queue, card)
-		return {
-			key = self.key .. "_standard",
-			vars = { card.ability.extra.h_size, card.ability.extra.h_mod, card.ability.extra.effect_disabled },
-		}
+		return { vars = { card.ability.extra.h_size, card.ability.extra.h_mod } }
 	end,
 	calculate = function(self, card, context)
 		if context.first_hand_drawn and MP.is_pvp_boss() and not context.blueprint then
@@ -119,15 +160,8 @@ MP.ReworkCenter("j_turtle_bean", {
 		else
 			card.ability.extra.effect_disabled = true
 		end
-		return true -- magic - override vanilla behavior
 	end,
 	remove_from_deck = function(self, card, from_debuff)
 		if not card.ability.extra.effect_disabled then G.hand:change_size(-card.ability.extra.h_size) end
-		return true -- magic - override vanilla behavior
 	end,
 })
-
--- comeback money nerf
--- if you die in pve then you get half the comeback money
--- some logic can be found in defensive joker rework (for stake checkups)
--- we also need some weird logic to ensure this toggles on and off
