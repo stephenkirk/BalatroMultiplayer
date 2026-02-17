@@ -1,6 +1,6 @@
 -- TODO: needs to be wired up to all rulesets and needs a name change
 SMODS.Consumable({
-	key = "ouija_sandbox",
+	key = "ouija_standard",
 	set = "Spectral",
 	pos = { x = 7, y = 4 },
 	config = { extra = { destroy = 3 }, mp_sticker_balanced = true },
