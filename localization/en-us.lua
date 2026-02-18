@@ -635,7 +635,7 @@ return {
 			},
 		},
 		Spectral = {
-			c_mp_ouija_sandbox = {
+			c_mp_ouija_standard = {
 				name = "Ouija",
 				text = {
 					"Destroy {C:attention}#1#{} random cards,",
