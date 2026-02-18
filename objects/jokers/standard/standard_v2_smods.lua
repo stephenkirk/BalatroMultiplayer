@@ -1,6 +1,6 @@
--- Idol
+-- TODO split up into separate files
 SMODS.Joker({
-	key = "idol_standard",
+	key = "idol",
 	unlocked = false,
 	blueprint_compat = true,
 	rarity = 2,
@@ -30,10 +30,13 @@ SMODS.Joker({
 			}
 		end
 	end,
+	mp_include = function(self)
+		return MP.UTILS.is_standard_ruleset() and MP.LOBBY.code
+	end,
 })
 
 SMODS.Joker({
-	key = "ticket_standard",
+	key = "ticket",
 	unlocked = false,
 	blueprint_compat = true,
 	rarity = 2,
@@ -64,10 +67,13 @@ SMODS.Joker({
 			}
 		end
 	end,
+	mp_include = function(self)
+		return MP.UTILS.is_standard_ruleset() and MP.LOBBY.code
+	end,
 })
 
 SMODS.Joker({
-	key = "seltzer_standard",
+	key = "seltzer",
 	blueprint_compat = true,
 	eternal_compat = false,
 	rarity = 1,
@@ -110,10 +116,17 @@ SMODS.Joker({
 			card.ability.extra.effect_disabled = false
 		end
 	end,
+	mp_include = function(self)
+		return MP.UTILS.is_standard_ruleset() and MP.LOBBY.code
+	end,
 })
 
 SMODS.Joker({
-	key = "turtle_bean_standard",
+	key = "turtle_bean",
+
+	-- no_collection = true,
+	unlocked = true,
+	discovered = true,
 	blueprint_compat = false,
 	eternal_compat = false,
 	rarity = 1,
@@ -163,5 +176,8 @@ SMODS.Joker({
 	end,
 	remove_from_deck = function(self, card, from_debuff)
 		if not card.ability.extra.effect_disabled then G.hand:change_size(-card.ability.extra.h_size) end
+	end,
+	mp_include = function(self)
+		return MP.UTILS.is_standard_ruleset() and MP.LOBBY.code
 	end,
 })
