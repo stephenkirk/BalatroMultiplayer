@@ -107,6 +107,11 @@ MP.Ruleset({
 		if SMODS.version ~= MP.SMODS_VERSION then
 			return localize({ type = "variable", key = "k_ruleset_disabled_smods_version", vars = { MP.SMODS_VERSION } })
 		end
+		local lovely_mod = SMODS.Mods["lovely"]
+		local lovely_ver = lovely_mod and lovely_mod.version or ""
+		if not lovely_ver:match("^" .. MP.LOVELY_VERSION:gsub("%.", "%%.")) then
+			return localize({ type = "variable", key = "k_ruleset_disabled_lovely_version", vars = { MP.LOVELY_VERSION } })
+		end
 		if not MP.INTEGRATIONS.TheOrder then return localize("k_ruleset_disabled_the_order_required") end
 		return false
 	end,
