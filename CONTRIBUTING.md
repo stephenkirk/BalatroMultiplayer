@@ -2,13 +2,13 @@
 
 Thank you for your interest in contributing to Balatro Multiplayer! We're building the definitive multiplayer experience for Balatro. Ready to make poker roguelikes even more unhinged? You've found the right repo.
 
-This little guide will help ensure consistency and quality across the codebase. Follow it and your PRs will merge. Ignore it and maintainers will reject your PR with the enthusiasm of a Celestial Pack hitting Jupiter.
+This little guide will help ensure consistency and quality across the codebase. Follow it and your PRs will merge. Ignore it and maintainers will reject your PR with the enthusiasm of a Neptune card.
 
 Let's build something that would make Jimbo proud.
 
 ## Quick Start
 
-**Prerequisites**: Install [Steamodded 1.0.0~BETA-0506a](https://github.com/Steamodded/smods/releases/tag/1.0.0-beta-0506a) and [Lovely Injector](https://github.com/ethangreen-dev/lovely-injector) (>=0.8)
+**Prerequisites**: Install [Steamodded 1.0.0~BETA-1016c](https://github.com/Steamodded/smods/releases/tag/1.0.0-beta-1016c) and [Lovely Injector](https://github.com/ethangreen-dev/lovely-injector) (>=0.8)
 
 ```bash
 # 1. Fork on GitHub, then clone
@@ -39,74 +39,7 @@ git push origin feature/your-feature
 # Then create PR on GitHub
 ```
 
-**Verify Setup**: Test that stylua works (`stylua --version`) and your Balatro installation has the required dependencies before starting development.
-
-## Code Style Guidelines
-
-### Lua Style Conventions
-
-**Indentation**: Use tabs, not spaces
-```lua
-function MP.example_function()
-	local example_var = "value"
-	if condition then
-		-- nested code uses tabs
-		return true
-	end
-end
-```
-
-**Naming Conventions**:
-- Variables and functions: `snake_case`
-- Constants: `UPPER_SNAKE_CASE`
-- Local variables: `snake_case`
-- Table keys: `snake_case`
-
-```lua
--- Good
-local player_count = 4
-local MP_CONFIG = {}
-function MP.get_lobby_code()
-
--- Bad
-local playerCount = 4
-local mpConfig = {}
-function MP.getLobbyCode()
-```
-
-**Table Formatting**:
-```lua
--- Good: aligned values, trailing comma on multiline
-MP.LOBBY = {
-	connected = false,
-	temp_code = "",
-	config = {},
-}
-
--- Single-line tables are acceptable for short entries
-local simple = {a = 1, b = 2}
-```
-
-**Comments**:
-- Use `--` for single-line comments
-- Place comments above the code they describe
-- Use descriptive comments for complex logic
-
-```lua
--- Calculate the multiplier based on current game state
-local mult = base_mult * modifier
-```
-
-**String Formatting**:
-- Use double quotes for strings by default
-- Use single quotes when the string contains double quotes
-
-### File Organization
-
-**File Structure**:
-- Keep related functionality in logical directories (`objects/`, `ui/`, `networking/`)
-- Use descriptive filenames that indicate purpose
-- Group similar objects together (jokers, consumables, etc.)
+**Verify Setup**: Test that stylua works (`stylua --version`) before starting development.
 
 ### Code Formatting
 
@@ -122,23 +55,16 @@ stylua .  # to format all files
 - **VS Code**: [Lua Language Server extension](https://marketplace.visualstudio.com/items?itemName=sumneko.lua) + StyLua
 - **JetBrains**: [SumnekoLua](https://plugins.jetbrains.com/plugin/22315-sumnekolua) + StyLua
 
+**File Structure**:
+- Keep related functionality in logical directories (`objects/`, `ui/`, `networking/`)
+- Use descriptive filenames that indicate purpose
+- Group similar objects together (jokers, consumables, etc.)
 
 ### Balatro-Specific Patterns
 
 **Mod Integration Pattern**:
-```lua
--- PREFERRED (but currently broken): MP.ReworkCenter approach
--- MP.ReworkCenter({
---     key = "j_example",
---     ruleset = MP.UTILS.get_standard_rulesets(),
---     calculate = function(self, card, context)
---         -- implementation
---     end,
--- })
-
--- CURRENT WORKAROUND: Use standard SMODS patterns
--- Refer to existing implementations in objects/ directories for working examples
-```
+* Use standard SMODS patterns
+* Refer to existing implementation in objects/ directories for working examples
 
 **Networking Actions**:
 ```lua
@@ -156,14 +82,23 @@ end
 ```
 
 **UI Components**:
-- Follow the existing component pattern in `ui/components/`
-- Use consistent naming: `lobby_*`, `game_*`, etc.
+|  |  |
+|------|-------------|
+| [`ui/_common/`](ui/_common/) | Shared components. Config toggles, spacers, etc. |
+| [`ui/utils.lua`](ui/utils.lua) | Home of `MP.UI.UTILS`. Utils for creating UI nodes |
+| [`ui/game/`](ui/game/) | UI inside the pvp match |
+| [`ui/lobby/`](ui/lobby/) | Lobby UI |
+| [`ui/main_menu/`](ui/main_menu/) | Main menu UI |
+| [`ui/smods_menu/`](ui/smods_menu/) | SMODS settings menu entry |
+
+**Mod Injection**:
+- The entrypoint is in [`core.lua`](core.lua)
+- Files/dirs prefixed with `_` are loaded first in [`MP.load_mp_dir`](core.lua#L72)
 
 ## Contribution Guidelines
 
-1. **Branch Naming**: Use descriptive names like `feature/new-gamemode` or `fix/lobby-crash`
-2. **Commits**: Write clear, descriptive commit messages
-3. **Testing**: Test your changes thoroughly across different scenarios
+1. **Commits**: Write clear, descriptive commit messages
+2. **Testing**: Test your changes thoroughly across different scenarios
 
 ## Testing Guidelines
 
@@ -182,15 +117,7 @@ All contributions go through code review. Reviewers will check for:
 - Compatibility with existing features
 - Security implications (networking code)
 
-## Performance Considerations
-
-- Minimize network traffic in multiplayer scenarios
-- Use efficient data structures for game state
-- Be mindful of memory usage in long games
-- Profile performance-critical code paths
-
 ## Questions?
 
 - Check existing [GitHub Issues](https://github.com/Balatro-Multiplayer/BalatroMultiplayer/issues)
 - Join the [Discord server](https://discord.gg/balatromp) for discussion
-- Open an issue or DM developers for clarification on contribution guidelines

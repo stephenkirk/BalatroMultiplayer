@@ -71,19 +71,19 @@ end
 function FN.SIM.add_chips(exact, min, max)
 	FN.SIM.adjust_field_with_range(function(x, y)
 		return x + y
-	end, "chips", mod_chips, exact, min, max)
+	end, "chips", FN.SIM.mod_chips, exact, min, max)
 end
 
 function FN.SIM.add_mult(exact, min, max)
 	FN.SIM.adjust_field_with_range(function(x, y)
 		return x + y
-	end, "mult", mod_mult, exact, min, max)
+	end, "mult", FN.SIM.mod_mult, exact, min, max)
 end
 
 function FN.SIM.x_mult(exact, min, max)
 	FN.SIM.adjust_field_with_range(function(x, y)
 		return x * y
-	end, "mult", mod_mult, exact, min, max)
+	end, "mult", FN.SIM.mod_mult, exact, min, max)
 end
 
 function FN.SIM.add_dollars(exact, min, max)
@@ -134,6 +134,26 @@ function FN.SIM.is_rank(card_data, ranks)
 	if card_data.ability.effect == "Stone Card" then return false end
 
 	if type(ranks) == "number" then ranks = { ranks } end
+	if FN.SIM.is_deck("b_mp_gradient") then
+		local temp = {}
+
+		for i, v in ipairs(ranks) do
+			temp[v - 1] = true
+			temp[v] = true
+			temp[v + 1] = true
+		end
+
+		ranks = {}
+		for k, v in pairs(temp) do
+			if k == 15 then
+				k = 2
+			elseif k == 1 then
+				k = 14
+			end
+			table.insert(ranks, k)
+		end
+		table.sort(ranks)
+	end
 	for _, r in ipairs(ranks) do
 		if card_data.rank == r then return true end
 	end
@@ -142,12 +162,9 @@ end
 
 function FN.SIM.check_rank_parity(card_data, check_even)
 	if check_even then
-		local is_even_numbered = (card_data.rank <= 10 and card_data.rank >= 0 and card_data.rank % 2 == 0)
-		return is_even_numbered
+		return FN.SIM.is_rank(card_data, { 2, 4, 6, 8, 10 })
 	else
-		local is_odd_numbered = (card_data.rank <= 10 and card_data.rank >= 0 and card_data.rank % 2 == 1)
-		local is_ace = (card_data.rank == 14)
-		return (is_odd_numbered or is_ace)
+		return FN.SIM.is_rank(card_data, { 3, 5, 7, 9, 14 })
 	end
 end
 
@@ -177,7 +194,7 @@ function FN.SIM.set_ability(card_data, center)
 		order = center.order or nil,
 		forced_selection = card_data.ability and card_data.ability.forced_selection or nil,
 		perma_bonus = card_data.ability and card_data.ability.perma_bonus or 0,
-		bonus = (card_data.ability and card_data.ability.bonus or 0) + (center.config.bonus or 0),
+		bonus = center.config.bonus or 0,
 	}
 end
 
@@ -203,4 +220,23 @@ function FN.SIM.set_edition(card_data, edition)
 	elseif edition.negative then
 		-- TODO
 	end
+end
+
+function FN.SIM.is_deck(deck)
+	if G.GAME.selected_back.effect.center.key == deck then
+		return true
+	elseif G.GAME.selected_back.effect.center.key == "b_mp_cocktail" then
+		for i = 1, 3 do
+			if G.GAME.modifiers.mp_cocktail[i] == deck then return true end
+		end
+	end
+	return false
+end
+
+function FN.SIM.mod_chips(_chips)
+	return _chips
+end
+
+function FN.SIM.mod_mult(_mult)
+	return _mult
 end

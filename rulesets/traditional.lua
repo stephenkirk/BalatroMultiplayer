@@ -2,10 +2,17 @@ MP.Ruleset({
 	key = "traditional",
 	multiplayer_content = true,
 	standard = true,
+	banned_silent = {
+		"j_hanging_chad",
+		"j_ticket",
+		"j_selzer",
+		"j_turtle_bean",
+		"j_bloodstone",
+		"c_ouija",
+	},
 	banned_jokers = {
 		"j_mp_speedrun",
 		"j_mp_conjoined_joker",
-		"j_hanging_chad",
 	},
 	banned_consumables = {
 		"c_justice",
@@ -14,96 +21,27 @@ MP.Ruleset({
 	banned_enhancements = {},
 	banned_tags = {},
 	banned_blinds = {},
-
 	reworked_jokers = {
 		"j_mp_hanging_chad",
+		"j_mp_ticket",
+		"j_mp_seltzer",
+		"j_mp_turtle_bean",
 	},
-	reworked_consumables = {},
+	reworked_consumables = {
+		"c_mp_ouija_standard",
+	},
 	reworked_vouchers = {},
 	reworked_enhancements = {
-		"m_glass",
+		"m_mp_display_glass",
 	},
 	reworked_tags = {},
 	reworked_blinds = {},
 	create_info_menu = function()
-		return {
-			{
-				n = G.UIT.R,
-				config = {
-					align = "tm",
-				},
-				nodes = {
-					MP.UI.BackgroundGrouping(localize("k_has_multiplayer_content"), {
-						{
-							n = G.UIT.T,
-							config = {
-								text = localize("k_yes"),
-								scale = 0.8,
-								colour = G.C.GREEN,
-							},
-						},
-					}, { col = true, text_scale = 0.6 }),
-					{
-						n = G.UIT.C,
-						config = {
-							minw = 0.1,
-							minh = 0.1,
-						},
-					},
-					MP.UI.BackgroundGrouping(localize("k_forces_lobby_options"), {
-						{
-							n = G.UIT.T,
-							config = {
-								text = localize("k_no"),
-								scale = 0.8,
-								colour = G.C.RED,
-							},
-						},
-					}, { col = true, text_scale = 0.6 }),
-					{
-						n = G.UIT.C,
-						config = {
-							minw = 0.1,
-							minh = 0.1,
-						},
-					},
-					MP.UI.BackgroundGrouping(localize("k_forces_gamemode"), {
-						{
-							n = G.UIT.T,
-							config = {
-								text = localize("k_no"),
-								scale = 0.8,
-								colour = G.C.RED,
-							},
-						},
-					}, { col = true, text_scale = 0.6 }),
-				},
-			},
-			{
-				n = G.UIT.R,
-				config = {
-					minw = 0.05,
-					minh = 0.05,
-				},
-			},
-			{
-				n = G.UIT.R,
-				config = {
-					align = "cl",
-					padding = 0.1,
-				},
-				nodes = {
-					{
-						n = G.UIT.T,
-						config = {
-							text = localize("k_traditional_description"),
-							scale = 0.6,
-							colour = G.C.UI.TEXT_LIGHT,
-						},
-					},
-				},
-			},
-		}
+		return MP.UI.CreateRulesetInfoMenu({
+			multiplayer_content = true,
+			forced_lobby_options = false,
+			description_key = "k_traditional_description",
+		})
 	end,
 	force_lobby_options = function(self)
 		MP.LOBBY.config.timer = false

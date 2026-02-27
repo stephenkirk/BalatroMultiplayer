@@ -33,6 +33,10 @@ local isSocketClosed = true
 local networkToUiChannel = love.thread.getChannel("networkToUi")
 local uiToNetworkChannel = love.thread.getChannel("uiToNetwork")
 
+-- Reconnection settings
+local maxReconnectAttempts = 3
+local reconnectDelays = { 2, 4, 8 } -- seconds, exponential backoff
+
 function Networking.connect()
 	-- TODO: Check first if Networking.Client is not null
 	-- and if it is, skip this function
@@ -50,12 +54,37 @@ function Networking.connect()
 
 	if connectionResult ~= 1 then
 		SEND_THREAD_DEBUG_MESSAGE(string.format("%s", errorMessage))
-		networkToUiChannel:push("action:error,message:Failed to connect to multiplayer server")
+		networkToUiChannel:push(json.encode({
+			action = "error",
+			message = "Failed to connect to multiplayer server",
+		}))
+		return false
 	else
 		isSocketClosed = false
 	end
 
 	Networking.Client:settimeout(0)
+	return true
+end
+
+-- Attempt automatic reconnection with exponential backoff.
+-- Returns true if reconnected, false if all attempts failed.
+function Networking.tryReconnect()
+	SEND_THREAD_DEBUG_MESSAGE("Connection lost, attempting automatic reconnection...")
+
+	for attempt = 1, maxReconnectAttempts do
+		local delay = reconnectDelays[attempt] or reconnectDelays[#reconnectDelays]
+		SEND_THREAD_DEBUG_MESSAGE(string.format("Reconnect attempt %d/%d in %ds...", attempt, maxReconnectAttempts, delay))
+		socket.sleep(delay)
+
+		if Networking.connect() then
+			SEND_THREAD_DEBUG_MESSAGE("Reconnected successfully!")
+			return true
+		end
+	end
+
+	SEND_THREAD_DEBUG_MESSAGE("All reconnection attempts failed.")
+	return false
 end
 
 -- Check for messages from the main thread
@@ -67,10 +96,10 @@ local mainThreadMessageQueue = function()
 		for _ = 1, requestsPerCycle do
 			local msg = uiToNetworkChannel:pop()
 			if msg then
-				if msg:find("^action") ~= nil then
-					Networking.Client:send(msg .. "\n")
-				elseif msg == "connect" then
+				if msg == "{\"action\":\"connect\"}" then
 					Networking.connect()
+				else
+					Networking.Client:send(msg .. "\n")
 				end
 			else
 				-- If there are no more messages, yield
@@ -94,9 +123,9 @@ end
 local timerCoroutine = coroutine.create(timer)
 
 -- All values are in seconds
-local keepAliveInitialTimeout = 7
-local keepAliveRetryTimeout = 3
-local keepAliveRetryCount = 3
+local keepAliveInitialTimeout = 20
+local keepAliveRetryTimeout = 5
+local keepAliveRetryCount = 4
 
 local isRetry = false
 local retryCount = 0
@@ -117,16 +146,24 @@ local networkPacketQueue = function()
 					-- Also reset timer
 					timerCoroutine = coroutine.create(timer)
 
-					-- For now, we just send the string as is to the main thread
+					-- Respond to server keepAlive directly on the socket
+					-- to avoid latency from routing through the UI thread
+					if string.find(data, '"keepAlive"') and not string.find(data, 'Ack') then
+						Networking.Client:send('{"action":"keepAliveAck"}\n')
+					end
+
+					-- Send the string as is to the main thread
 					networkToUiChannel:push(data)
 				elseif error == "close" then
-					-- Handle connection closed gracefully
+					-- Connection closed, attempt automatic reconnection
 					isSocketClosed = true
 					retryCount = 0
 					isRetry = false
-
 					timerCoroutine = coroutine.create(timer)
-					networkToUiChannel:push("action:disconnected")
+
+					if not Networking.tryReconnect() then
+						networkToUiChannel:push("{\"action\":\"disconnected\"}")
+					end
 				else
 					-- If there are no more packets, yield
 					coroutine.yield()
@@ -159,20 +196,21 @@ while true do
 		if retryCount > keepAliveRetryCount then
 			Networking.Client:close()
 
-			-- Connection closed, restart everything
+			-- Keepalive failed, attempt automatic reconnection
 			isSocketClosed = true
 			retryCount = 0
 			isRetry = false
-
 			timerCoroutine = coroutine.create(timer)
 
-			networkToUiChannel:push("action:disconnected")
+			if not Networking.tryReconnect() then
+				networkToUiChannel:push("{\"action\":\"disconnected\"}")
+			end
 		end
 
 		if isRetry then
 			retryCount = retryCount + 1
 			-- Send keepAlive without cutting the line
-			uiToNetworkChannel:push("action:keepAlive")
+			uiToNetworkChannel:push("{\"action\":\"keepAlive\"}")
 
 			-- Restart the timer
 			timerCoroutine = coroutine.create(timer)
@@ -180,7 +218,7 @@ while true do
 		end
 	end
 
-	-- Sleeps for 200 milliseconds
-	socket.sleep(0.2)
+	-- Sleeps for 50 milliseconds
+	socket.sleep(0.05)
 end
 ]]

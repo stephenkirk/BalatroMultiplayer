@@ -139,12 +139,70 @@ return {
 			},
 		},
 		Enhanced = {
-			m_mp_glass = {
+			m_mp_display_glass = {
 				name = "Carta de Vidro",
 				text = {
 					"{X:mult,C:white} X#1# {} Multi",
 					"Chance de {C:green}#2# em #3#{} de",
 					"destruir carta",
+				},
+			},
+			m_mp_sandbox_display_glass = {
+				name = "Carta de Vidro",
+				text = {
+					"{X:mult,C:white} X#1# {} Multi",
+					"Chance de {C:green}#2# em #3#{} de",
+					"destruir carta",
+				},
+			},
+		},
+		Back = {
+			b_mp_cocktail = {
+				name = "Baralho Coquetel",
+				text = {
+					"Copia todos os efeitos",
+					"de {C:attention}3{} outros baralhos",
+					"aleatoriamente",
+				},
+			},
+			b_mp_gradient = {
+				name = "Baralho Gradiente",
+				text = {
+					"Cartas também são consideradas",
+					"uma classe {C:attention}acima{} ou {C:attention}abaixo",
+					"para todos os efeitos de {C:attention}Curinga{}",
+				},
+			},
+			b_mp_indigo = {
+				name = "Baralho Índigo",
+				text = {
+					"Escolha {C:attention}1{} carta extra",
+					"em Pacotes de Reforço",
+				},
+			},
+			b_mp_orange = {
+				name = "Baralho Laranja",
+				text = {
+					"Comece a partida com um",
+					"{C:attention,T:p_mp_standard_giga}Pacote Padrão Giga{}, e",
+					"{C:attention}2{} cópias de {C:tarot,T:c_hanged_man}O Enforcado",
+				},
+			},
+			b_mp_oracle = {
+				name = "Baralho Oráculo",
+				text = {
+					"Comece a partida com {C:spectral,T:c_medium}Médium",
+					"e {C:attention,T:v_clearance_sale}Promoção",
+					"Dinheiro é limitado",
+					"a {C:money}$50",
+				},
+			},
+			b_mp_violet = {
+				name = "Baralho Violeta",
+				text = {
+					"{C:attention}+1{} Cupom na loja",
+					"Durante a aposta {C:attention}1{}, Cupons",
+					"são {C:attention}50%{} mais baratos",
 				},
 			},
 		},
@@ -156,18 +214,20 @@ return {
 					"Seu único rival",
 				},
 			},
+			p_mp_standard_giga = {
+				name = "Pacote Padrão Giga",
+				text = {
+					"Escolha {C:attention}#1#{} de até",
+					"{C:attention}#2#{C:attention} cartas{} para",
+					"adicionar ao seu baralho",
+					"{C:attention}Não é possível ignorar{}",
+				},
+			},
 		},
 	},
 	misc = {
 		labels = {
 			mp_phantom = "Fantasma",
-		},
-		challenge_names = {
-			c_mp_standard = "Padrão",
-			c_mp_badlatro = "Badlatro",
-			c_mp_tournament = "Torneio",
-			c_mp_weekly = "Semanal",
-			c_mp_vanilla = "Vanilla",
 		},
 		dictionary = {
 			b_singleplayer = "Um jogador",
@@ -181,8 +241,14 @@ return {
 			b_leave_lobby = "Sair da Sala",
 			b_mp_discord = "Servidor de Discord do Balatro Multiplayer",
 			b_start = "INICIAR",
-			b_wait_for_host_start = { "ESPERANDO PELO", "ANFITRIÃO COMEÇAR" },
-			b_wait_for_players = { "ESPERANDO POR", "JOGADORES" },
+			b_wait_for_host_start = {
+				"ESPERANDO PELO",
+				"ANFITRIÃO COMEÇAR",
+			},
+			b_wait_for_players = {
+				"ESPERANDO POR",
+				"JOGADORES",
+			},
 			b_lobby_options = "OPÇÕES DA SALA",
 			b_copy_clipboard = "Copiar para a área de transferência",
 			b_view_code = "VER CÓDIGO",
@@ -291,36 +357,63 @@ return {
 			k_requires_restart = "*você precisará reiniciar o jogo para aplicar as mudanças",
 			k_bans = "Banimentos",
 			k_reworks = "Adições/Modificações",
-			ml_enemy_loc = { "Localização do", "oponente" },
+			ml_enemy_loc = {
+				"Localização do",
+				"oponente",
+			},
 			ml_mp_kofi_message = {
 				"Este mod e servidor de jogo é",
 				"desenvolvido e mantido por",
 				"uma pessoa, se",
 				"gostou considere",
 			},
-			ml_lobby_info = { "Lobby", "Info" },
+			ml_lobby_info = {
+				"Lobby",
+				"Info",
+			},
 			loc_ready = "Pronto para Duelar",
 			loc_selecting = "Escolhendo um Blind",
 			loc_shop = "Comprando",
 			loc_playing = "Jogando ",
 		},
 		v_dictionary = {
-			a_mp_art = { "Arte: #1#" },
-			a_mp_code = { "Código: #1#" },
-			a_mp_idea = { "Ideia: #1#" },
-			a_mp_skips_ahead = { "#1# Blinds na frente" },
-			a_mp_skips_behind = { "#1# Blinds atrás" },
-			a_mp_skips_tied = { "Empatado" },
+			a_mp_art = {
+				"Arte: #1#",
+			},
+			a_mp_code = {
+				"Código: #1#",
+			},
+			a_mp_idea = {
+				"Ideia: #1#",
+			},
+			a_mp_skips_ahead = {
+				"#1# Blinds na frente",
+			},
+			a_mp_skips_behind = {
+				"#1# Blinds atrás",
+			},
+			a_mp_skips_tied = {
+				"Empatado",
+			},
 			k_banned_objs = "#1# Banidos",
 			k_no_banned_objs = "#1# Não Banidos",
 			k_reworked_objs = "#1# Adicionados/Modificados",
 			k_no_reworked_objs = "#1# Não Adicionados/Modificados",
 		},
 		v_text = {
-			ch_c_hanging_chad_rework = { "{C:attention}Comprovante{} foi {C:dark_edition}modificado" },
-			ch_c_glass_cards_rework = { "{C:attention}Cartas de Vidro{} foram {C:dark_edition}modificadas" },
+			ch_c_hanging_chad_rework = {
+				"{C:attention}Comprovante{} foi {C:dark_edition}modificado",
+			},
+			ch_c_glass_cards_rework = {
+				"{C:attention}Cartas de Vidro{} foram {C:dark_edition}modificadas",
+			},
 		},
 		challenge_names = {
+			c_mp_standard = "Padrão",
+			c_mp_badlatro = "Badlatro",
+			c_mp_tournament = "Torneio",
+			c_mp_weekly = "Semanal",
+			c_mp_vanilla = "Vanilla",
 			c_mp_misprint_deck = "Baralho de Impressão Errada",
 			c_mp_legendaries = "Lendários",
 			c_mp_psychosis = "Psicose",

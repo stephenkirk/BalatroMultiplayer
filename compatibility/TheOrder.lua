@@ -12,9 +12,9 @@ function create_card(_type, area, legendary, _rarity, skip_materialize, soulable
 				key_append = _type
 			end
 		elseif not (_type == "Base" or _type == "Enhanced") then
-			if not (key_append == "jud" and G.GAME.stake >= 7) then -- judgement queue for higher stakes
-				key_append = _rarity -- _rarity replacing key_append can be entirely removed to normalise skip tags and riff raff with shop rarity queues
-			end
+			--if not (key_append == "jud" and G.GAME.stake >= 7) then
+			key_append = _rarity -- _rarity replacing key_append can be entirely removed to normalise skip tags and riff raff with shop rarity queues
+			--end
 		end
 		local c = cc(_type, area, legendary, _rarity, skip_materialize, soulable, forced_key, key_append)
 		G.GAME.round_resets.ante = a
@@ -235,7 +235,7 @@ end
 
 local nextvouchers = SMODS.get_next_vouchers
 function SMODS.get_next_vouchers(vouchers)
-	if MP.should_use_the_order() then
+	if MP.should_use_the_order() or MP.is_major_league_ruleset() then
 		vouchers = vouchers or { spawn = {} }
 		local _pool = get_current_pool("Voucher")
 		local culled = get_culled(_pool)
@@ -259,7 +259,7 @@ end
 
 local nextvoucherkey = get_next_voucher_key
 function get_next_voucher_key(_from_tag)
-	if MP.should_use_the_order() then
+	if MP.should_use_the_order() or MP.is_major_league_ruleset() then
 		local _pool = get_current_pool("Voucher")
 		local culled = get_culled(_pool)
 		local center = pseudorandom_element(culled, pseudoseed("Voucher0"))
@@ -268,7 +268,6 @@ function get_next_voucher_key(_from_tag)
 			it = it + 1
 			center = pseudorandom_element(culled, pseudoseed("Voucher0"))
 		end
-
 		return center
 	end
 	return nextvoucherkey(_from_tag)

@@ -229,6 +229,15 @@ if not FN.SIM.run then
 		end
 	end
 
+	function FN.SIM.simulate_joker_discard_effects(cards, card)
+		for _, joker in ipairs(FN.SIM.env.jokers) do
+			FN.SIM.simulate_joker(
+				joker,
+				FN.SIM.get_context(G.hand, { discard = true, cards = cards, other_card = card })
+			)
+		end
+	end
+
 	function FN.SIM.simulate_blind_effects()
 		if G.GAME.blind.disabled then return end
 
@@ -236,8 +245,8 @@ if not FN.SIM.run then
 			local function flint(data)
 				local half_chips = math.floor(data.chips / 2 + 0.5)
 				local half_mult = math.floor(data.mult / 2 + 0.5)
-				data.chips = mod_chips(math.max(half_chips, 0))
-				data.mult = mod_mult(math.max(half_mult, 1))
+				data.chips = FN.SIM.mod_chips(math.max(half_chips, 0))
+				data.mult = FN.SIM.mod_mult(math.max(half_mult, 1))
 			end
 
 			flint(FN.SIM.running.min)
@@ -249,17 +258,32 @@ if not FN.SIM.run then
 	end
 
 	function FN.SIM.simulate_deck_effects()
-		if G.GAME.selected_back.name == "Plasma Deck" then
+		if FN.SIM.is_deck("b_plasma") then
 			local function plasma(data)
 				local sum = data.chips + data.mult
 				local half_sum = math.floor(sum / 2)
-				data.chips = mod_chips(half_sum)
-				data.mult = mod_mult(half_sum)
+				data.chips = FN.SIM.mod_chips(half_sum)
+				data.mult = FN.SIM.mod_mult(half_sum)
 			end
 
 			plasma(FN.SIM.running.min)
 			plasma(FN.SIM.running.exact)
 			plasma(FN.SIM.running.max)
+		elseif G.GAME.modifiers.mp_score_instability then
+			local function unplasma(data)
+				local diff = data.chips - data.mult
+				if diff > 0 then
+					diff = math.min(diff, data.mult - 1)
+				elseif diff < 0 then
+					diff = math.max(diff, -data.chips)
+				end
+				data.chips = FN.SIM.mod_chips(data.chips + diff)
+				data.mult = FN.SIM.mod_mult(data.mult - diff)
+			end
+
+			unplasma(FN.SIM.running.min)
+			unplasma(FN.SIM.running.exact)
+			unplasma(FN.SIM.running.max)
 		else
 			-- Other decks do not impact scoring; refer to Back:trigger_effect(..)
 		end
@@ -273,19 +297,87 @@ if not FN.SIM.run then
 
 		if blind_obj.name == "The Hook" then
 			blind_obj.triggered = true
-			for _ = 1, math.min(2, #FN.SIM.env.held_cards) do
-				-- TODO: Identify cards-in-hand that can affect score, simulate with/without them for min/max
-				local selected_card, card_key = pseudorandom_element(FN.SIM.env.held_cards, pseudoseed("hook"))
-				table.remove(FN.SIM.env.held_cards, card_key)
-				for _, joker in ipairs(FN.SIM.env.jokers) do
-					-- Note that the cardarea argument is largely arbitrary (used for FN.SIM.JOKERS),
-					-- I use G.hand because The Hook discards from the hand
-					FN.SIM.simulate_joker(
-						joker,
-						FN.SIM.get_context(G.hand, { discard = true, other_card = selected_card })
-					)
+
+			local held = FN.SIM.env.held_cards
+			local n = #held
+			local combinations = {}
+
+			-- Generate all possible discard combinations
+			if n == 0 then
+				table.insert(combinations, {})
+			elseif n == 1 then
+				for a = 1, n do
+					table.insert(combinations, { a })
+				end
+			elseif n >= 2 then
+				for a = 1, n - 1 do
+					for b = a + 1, n do
+						table.insert(combinations, { a, b })
+					end
 				end
 			end
+
+			local min_score, max_score = math.huge, -math.huge
+			local min_dollars, max_dollars = math.huge, -math.huge
+
+			for _, discard_idxs in ipairs(combinations) do
+				-- Deep copy held cards
+				local held_copy = {}
+				local discarded = {}
+				for i, card in ipairs(held) do
+					held_copy[i] = copy_table(card)
+				end
+
+				-- Remove discard cards from held_copy
+				table.sort(discard_idxs, function(a, b)
+					return a > b
+				end)
+				for _, idx in ipairs(discard_idxs) do
+					discarded[#discarded + 1] = table.remove(held_copy, idx)
+				end
+
+				-- Backup and replace held cards and jokers temporarily
+				local backup_held = FN.SIM.env.held_cards
+				FN.SIM.env.held_cards = held_copy
+				local backup_jokers = copy_table(FN.SIM.env.jokers)
+
+				-- Reset sim state
+				FN.SIM.running.min = { chips = 0, mult = 0, dollars = 0 }
+				FN.SIM.running.exact = { chips = 0, mult = 0, dollars = 0 }
+				FN.SIM.running.max = { chips = 0, mult = 0, dollars = 0 }
+
+				for i = 1, #discarded do
+					FN.SIM.simulate_joker_discard_effects(discarded, discarded[i])
+				end
+
+				-- Simulate score
+				FN.SIM.simulate_joker_before_effects()
+				FN.SIM.add_base_chips_and_mult()
+				FN.SIM.simulate_blind_effects()
+				FN.SIM.simulate_scoring_cards()
+				FN.SIM.simulate_held_cards()
+				FN.SIM.simulate_joker_global_effects()
+				FN.SIM.simulate_consumable_effects()
+				FN.SIM.simulate_deck_effects()
+
+				-- Evaluate score
+				local res = FN.SIM.get_results()
+				min_score = math.min(min_score, res.score.min)
+				max_score = math.max(max_score, res.score.max)
+				min_dollars = math.min(min_dollars, res.dollars.min)
+				max_dollars = math.max(max_dollars, res.dollars.max)
+
+				-- Restore original held cards and jokers
+				FN.SIM.env.held_cards = backup_held
+				FN.SIM.env.jokers = backup_jokers
+			end
+
+			-- Overwrite final min/max range based on permutations
+			FN.SIM.running.min = { chips = min_score, mult = 1, dollars = min_dollars }
+			FN.SIM.running.max = { chips = max_score, mult = 1, dollars = max_dollars }
+
+			-- NOTE: FN.SIM.running.exact remains unset here; it's not relevant in this projection context
+			return true -- Prevent default simulation since we’ve replaced it entirely
 		end
 
 		if blind_obj.name == "The Tooth" then

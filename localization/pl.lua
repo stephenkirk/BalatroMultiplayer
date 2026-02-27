@@ -137,13 +137,81 @@ return {
 			},
 		},
 		Enhanced = {
-			m_mp_glass = {
+			m_mp_display_glass = {
 				name = "Szklany Joker",
 				text = {
 					"Ten joker zdobywa {X:mult,C:white} X#1# {}",
 					"do mnoż. za każdą zniszczoną",
 					"{C:attention}Kartę Szklaną",
 					"{C:inactive}(obecnie {X:mult,C:white} X#2# {C:inactive} do mnoż.)",
+				},
+			},
+			m_mp_sandbox_display_glass = {
+				name = "Szklany Joker",
+				text = {
+					"Ten joker zdobywa {X:mult,C:white} X#1# {}",
+					"do mnoż. za każdą zniszczoną",
+					"{C:attention}Kartę Szklaną",
+					"{C:inactive}(obecnie {X:mult,C:white} X#2# {C:inactive} do mnoż.)",
+				},
+			},
+		},
+		Back = {
+			b_mp_cocktail = {
+				name = "Koktajlowa talia",
+				text = {
+					"Kopiuje efekty",
+					"{C:attention}3{} innych",
+					"losowych talii",
+				},
+			},
+			b_mp_gradient = {
+				name = "Gradientowa talia",
+				text = {
+					"Karty są także traktowane jak",
+					"jedna ranga {C:attention}wyższa{} lub {C:attention}niższa",
+					"przez wszystkie efekty {C:attention}jokerów{}",
+				},
+			},
+			b_mp_indigo = {
+				name = "Talia indigo",
+				text = {
+					"Wybierz {C:attention}1{} dodatkową kartę",
+					"w paczkach wzmacniających",
+				},
+			},
+			b_mp_orange = {
+				name = "Pomarańczowa talia",
+				text = {
+					"Rozpoczynacz podejście z",
+					"{C:attention,T:p_mp_standard_giga}gigapaczką standardową{} oraz",
+					"{C:attention}2{} kopiami {C:tarot,T:c_hanged_man}Wisielca",
+				},
+			},
+			b_mp_oracle = {
+				name = "Wyroczniowa talia",
+				text = {
+					"Rozpoczynacz podejście z",
+					"kartą {C:spectral,T:c_medium}Medium",
+					"i {C:attention,T:v_clearance_sale}Wyprzedarz",
+					"Limit pieniędzy to {C:money}$50",
+				},
+			},
+			b_mp_violet = {
+				name = "Fioletowa talia",
+				text = {
+					"{C:attention}+1{} kupon w sklepach.",
+					"W wejściu {C:attention}1{}, kupony",
+					"mają zniżkę {C:attention}50%{}",
+				},
+			},
+			b_mp_heidelberg = {
+				name = "Heidelbergowa talia",
+				text = {
+					"Tworzy {C:dark_edition}Negatyw{}",
+					"{C:attention}1{} losowej posiadanej",
+					"{C:attention}zużywalnej{} karty",
+					"na końcu zakupów w {C:attention}sklepie",
 				},
 			},
 		},
@@ -155,18 +223,48 @@ return {
 					"Twój jeden i jedyny Nemesis",
 				},
 			},
+			p_mp_standard_giga = {
+				name = "Gigapaczka standardowa",
+				text = {
+					"Wybierz {C:attention}#1#{} z",
+					"{C:attention}#2#{} kart {C:attention}rozgrywających{}, by",
+					"dodać je do swojej talii",
+					"{C:attention}Niepomijalna{}",
+				},
+			},
+		},
+		Stake = {
+			stake_mp_planet = {
+				name = "Planetowa stawka",
+				text = {
+					"Fajniejsza, starsza siostra {C:attention}pomarańczowej{},",
+					"{C:attention}stawki{} która łaskawie oddała ci",
+					"{C:red}zrzutkę wsparcia emocjonalnego{}, bo",
+					"nawet ona nie jest taka okrutna",
+				},
+			},
+			stake_mp_spectral = {
+				name = "Stawka ducha",
+				text = {
+					"Stosuje efekty {C:planet}planetowej stawki{} plus:",
+					"{C:money}Wyporzyczane{} jokery pojawiają się,",
+					"Wymagany wynik skaluje się",
+					"jeszcze szybciej dla każdego {C:attention}wejścia",
+				},
+			},
+			stake_mp_spectralplus = {
+				name = "Stawka ducha+",
+				text = {
+					"Stosuje efekty {C:planet}stawki ducha{} plus:",
+					"Wymagany wynik skaluje się",
+					"jeszcze szybciej dla każdego {C:attention}wejścia",
+				},
+			},
 		},
 	},
 	misc = {
 		labels = {
 			mp_phantom = "Widmo",
-		},
-		challenge_names = {
-			c_mp_standard = "Standardowe",
-			c_mp_badlatro = "Badlatro",
-			c_mp_tournament = "Turnejowe",
-			c_mp_weekly = "Tygodniowe",
-			c_mp_vanilla = "Vanilla",
 		},
 		dictionary = {
 			b_singleplayer = "Tryb Jednoosobowy",
@@ -180,8 +278,14 @@ return {
 			b_leave_lobby = "Opuść Lobby",
 			b_mp_discord = "Serwera Discord Balatro Multiplayer",
 			b_start = "START",
-			b_wait_for_host_start = { "CZEKANIE NA", "ROZPOCZĘCZIE GRY" },
-			b_wait_for_players = { "CZEKANIE NA", "GRACZY" },
+			b_wait_for_host_start = {
+				"CZEKANIE NA",
+				"ROZPOCZĘCZIE GRY",
+			},
+			b_wait_for_players = {
+				"CZEKANIE NA",
+				"GRACZY",
+			},
 			b_lobby_options = "OPCJE GRY",
 			b_copy_clipboard = "Skopiuj do schowka",
 			b_view_code = "POKAŻ KOD",
@@ -252,32 +356,59 @@ return {
 			k_the_order_credit = "*Twórca: @MathIsFun_",
 			k_the_order_integration_desc = "Ten mod sprawi, że kreacja kart nie będzie zależna od wstępu i wybór kart będzie ten sam dla wszystkich graczy.",
 			k_requires_restart = "*Wymaga ponownego uruchomienia gry",
-			ml_enemy_loc = { "Lokacja", "prezeciwnika" },
+			ml_enemy_loc = {
+				"Lokacja",
+				"prezeciwnika",
+			},
 			ml_mp_kofi_message = {
 				"Ten mod był zaprogramowany",
 				"i jest utrzymywany przez",
 				"jedną osobę, jeżeli tobie się",
 				"spodobał,",
 			},
-			ml_lobby_info = { "Informacje", "o Lobby" },
+			ml_lobby_info = {
+				"Informacje",
+				"o Lobby",
+			},
 			loc_ready = "Gotowość do PVP",
 			loc_selecting = "Wybiera Przeszkadzajkę",
 			loc_shop = "W Sklepie",
 			loc_playing = "Gra w ",
 		},
 		v_dictionary = {
-			a_mp_art = { "Zasoby: #1#" },
-			a_mp_code = { "Programowanie: #1#" },
-			a_mp_idea = { "Pomysł: #1#" },
-			a_mp_skips_ahead = { "#1# Pominięć w Przód" },
-			a_mp_skips_behind = { "#1# Pominięć w Tył" },
-			a_mp_skips_tied = { "Remis" },
+			a_mp_art = {
+				"Zasoby: #1#",
+			},
+			a_mp_code = {
+				"Programowanie: #1#",
+			},
+			a_mp_idea = {
+				"Pomysł: #1#",
+			},
+			a_mp_skips_ahead = {
+				"#1# Pominięć w Przód",
+			},
+			a_mp_skips_behind = {
+				"#1# Pominięć w Tył",
+			},
+			a_mp_skips_tied = {
+				"Remis",
+			},
 		},
 		v_text = {
-			ch_c_hanging_chad_rework = { "Joker {C:attention}Na włosku{} został {C:dark_edition}przerobiony" },
-			ch_c_glass_cards_rework = { "{C:attention}Karty Szklane{} zostały {C:dark_edition}przerobione" },
+			ch_c_hanging_chad_rework = {
+				"Joker {C:attention}Na włosku{} został {C:dark_edition}przerobiony",
+			},
+			ch_c_glass_cards_rework = {
+				"{C:attention}Karty Szklane{} zostały {C:dark_edition}przerobione",
+			},
 		},
 		challenge_names = {
+			c_mp_standard = "Standardowe",
+			c_mp_badlatro = "Badlatro",
+			c_mp_tournament = "Turnejowe",
+			c_mp_weekly = "Tygodniowe",
+			c_mp_vanilla = "Vanilla",
 			c_mp_misprint_deck = "Talia - Błąd w druku",
 			c_mp_legendaries = "Jokery Legendarne",
 			c_mp_psychosis = "Psychoza",

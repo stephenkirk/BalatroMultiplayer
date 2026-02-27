@@ -1,7 +1,10 @@
+local json = require("json")
+
 Client = {}
 
 function Client.send(msg)
-	if not (msg == "action:keepAliveAck") then
+	msg = json.encode(msg)
+	if msg ~= '{"action":"keepAliveAck"}' then
 		sendTraceMessage(string.format("Client sent message: %s", msg), "MULTIPLAYER")
 	end
 	love.thread.getChannel("uiToNetwork"):push(msg)
@@ -11,13 +14,11 @@ end
 function MP.ACTIONS.set_username(username)
 	MP.LOBBY.username = username or "Guest"
 	if MP.LOBBY.connected then
-		Client.send(
-			string.format(
-				"action:username,username:%s,modHash:%s",
-				MP.LOBBY.username .. "~" .. MP.LOBBY.blind_col,
-				MP.MOD_STRING
-			)
-		)
+		Client.send({
+			action = "username",
+			username = MP.LOBBY.username .. "~" .. MP.LOBBY.blind_col,
+			modHash = MP.MOD_STRING,
+		})
 	end
 end
 
@@ -25,30 +26,68 @@ function MP.ACTIONS.set_blind_col(num)
 	MP.LOBBY.blind_col = num or 1
 end
 
+-- Reconnection state (persists across connections)
+local reconnectToken = nil
+local lastLobbyCode = nil
+
 local function action_connected()
 	MP.LOBBY.connected = true
 	MP.UI.update_connection_status()
-	Client.send(
-		string.format(
-			"action:username,username:%s,modHash:%s",
-			MP.LOBBY.username .. "~" .. MP.LOBBY.blind_col,
-			MP.MOD_STRING
-		)
-	)
+	Client.send({
+		action = "username",
+		username = MP.LOBBY.username .. "~" .. MP.LOBBY.blind_col,
+		modHash = MP.MOD_STRING,
+	})
+
+	-- If we have reconnect info, attempt to rejoin the lobby
+	if reconnectToken and lastLobbyCode then
+		Client.send({
+			action = "rejoinLobby",
+			code = lastLobbyCode,
+			reconnectToken = reconnectToken,
+		})
+	end
 end
 
-local function action_joinedLobby(code, type)
+local function action_joinedLobby(code, type, token)
 	MP.LOBBY.code = code
 	MP.LOBBY.type = type
 	MP.LOBBY.ready_to_start = false
+	-- Store reconnect info for potential future reconnection
+	if token then
+		reconnectToken = token
+	end
+	lastLobbyCode = code
 	MP.ACTIONS.sync_client()
 	MP.ACTIONS.lobby_info()
 	MP.UI.update_connection_status()
 end
 
+local function action_rejoinedLobby(code, type, token)
+	MP.LOBBY.code = code
+	MP.LOBBY.type = type
+	-- Update reconnect token
+	reconnectToken = token
+	lastLobbyCode = code
+	MP.ACTIONS.sync_client()
+	MP.ACTIONS.lobby_info()
+	MP.UI.update_connection_status()
+end
+
+local function action_enemyDisconnected()
+	sendWarnMessage("Opponent disconnected, waiting for reconnection...", "MULTIPLAYER")
+	MP.UI.UTILS.overlay_message("Opponent disconnected,\nwaiting for reconnection...", true)
+end
+
+local function action_enemyReconnected()
+	sendWarnMessage("Opponent reconnected!", "MULTIPLAYER")
+	G.FUNCS.exit_overlay_menu()
+	MP.UI.UTILS.overlay_message("Opponent reconnected!")
+end
+
 local function action_lobbyInfo(host, hostHash, hostCached, guest, guestHash, guestCached, guestReady, is_host)
 	MP.LOBBY.players = {}
-	MP.LOBBY.is_host = is_host == "true"
+	MP.LOBBY.is_host = is_host
 	local function parseName(name)
 		local username, col_str = string.match(name, "([^~]+)~(%d+)")
 		username = username or "Guest"
@@ -63,7 +102,7 @@ local function action_lobbyInfo(host, hostHash, hostCached, guest, guestHash, gu
 		blind_col = hostCol,
 		hash_str = hostMods,
 		hash = hash(hostMods),
-		cached = hostCached == "true",
+		cached = hostCached,
 		config = hostConfig,
 	}
 
@@ -75,20 +114,16 @@ local function action_lobbyInfo(host, hostHash, hostCached, guest, guestHash, gu
 			blind_col = guestCol,
 			hash_str = guestMods,
 			hash = hash(guestMods),
-			cached = guestCached == "true",
+			cached = guestCached,
 			config = guestConfig,
 		}
 	else
 		MP.LOBBY.guest = {}
 	end
 
-	-- Backwards compatibility for old server, assume guest is ready
-	-- TODO: Remove this once new server gets released
-	guestReady = guestReady or "true"
-
 	-- TODO: This should check for player count instead
 	-- once we enable more than 2 players
-	MP.LOBBY.ready_to_start = guest ~= nil and guestReady == "true"
+	MP.LOBBY.ready_to_start = guest ~= nil and guestReady
 
 	if MP.LOBBY.is_host then MP.ACTIONS.lobby_options() end
 
@@ -98,20 +133,24 @@ end
 local function action_error(message)
 	sendWarnMessage(message, "MULTIPLAYER")
 
-	MP.UTILS.overlay_message(message)
+	MP.UI.UTILS.overlay_message(message)
 end
 
 local function action_keep_alive()
-	Client.send("action:keepAliveAck")
+	Client.send({
+		action = "keepAliveAck",
+	})
 end
 
 local function action_disconnected()
 	MP.LOBBY.connected = false
 	if MP.LOBBY.code then MP.LOBBY.code = nil end
+	-- Clear reconnect state since all reconnection attempts failed
+	reconnectToken = nil
+	lastLobbyCode = nil
 	MP.UI.update_connection_status()
 end
 
----@param deck string
 ---@param seed string
 ---@param stake_str string
 local function action_start_game(seed, stake_str)
@@ -122,6 +161,11 @@ local function action_start_game(seed, stake_str)
 		seed = MP.LOBBY.config.custom_seed
 	end
 	G.FUNCS.lobby_start_run(nil, { seed = seed, stake = stake })
+	if MP.LOBBY.config.ruleset == "ruleset_mp_speedlatro" then
+		MP.LOBBY.config.timer_base_seconds = MP.LOBBY.config.timer_base_seconds - 3
+		MP.GAME.timer = MP.LOBBY.config.timer_base_seconds
+		MP.ACTIONS.start_ante_timer()
+	end
 	MP.LOBBY.ready_to_start = false
 end
 
@@ -202,13 +246,15 @@ local function action_enemy_info(score_str, hands_left_str, skips_str, lives_str
 		end,
 	}))
 
+	if MP.GAME.enemy.lives > lives then
+		play_sound("holo1", 0.865, 0.9)
+		play_sound("gong", 0.765, 0.4)
+	end
+
 	MP.GAME.enemy.hands = hands_left
 	MP.GAME.enemy.skips = skips
 	MP.GAME.enemy.lives = lives
-	if MP.is_pvp_boss() then
-		G.HUD_blind:get_UIE_by_ID("HUD_blind_count"):juice_up()
-		G.HUD_blind:get_UIE_by_ID("dollars_to_be_earned"):juice_up()
-	end
+	if MP.UI.juice_up_pvp_hud then MP.UI.juice_up_pvp_hud() end
 end
 
 local function action_stop_game()
@@ -223,16 +269,23 @@ local function action_end_pvp()
 	MP.GAME.end_pvp = true
 	MP.GAME.timer = MP.LOBBY.config.timer_base_seconds
 	MP.GAME.timer_started = false
+	MP.GAME.ready_blind = false
+	if MP.LOBBY.config.ruleset == "ruleset_mp_speedlatro" then
+		MP.GAME.timer_started = true
+		MP.ACTIONS.start_ante_timer()
+	end
 end
 
 ---@param lives number
 local function action_player_info(lives)
 	if MP.GAME.lives ~= lives then
 		if MP.GAME.lives ~= 0 and MP.LOBBY.config.gold_on_life_loss then
-			MP.GAME.comeback_bonus_given = false
-			MP.GAME.comeback_bonus = MP.GAME.comeback_bonus + 1
+			if MP.is_pvp_boss() or MP.is_major_league_ruleset() then
+				MP.GAME.comeback_bonus_given = false
+				MP.GAME.comeback_bonus = MP.GAME.comeback_bonus + 1
+			end
 		end
-		ease_lives(lives - MP.GAME.lives)
+		MP.UI.ease_lives(lives - MP.GAME.lives)
 		if MP.LOBBY.config.no_gold_on_round_loss and (G.GAME.blind and G.GAME.blind.dollars) then
 			G.GAME.blind.dollars = 0
 		end
@@ -246,6 +299,7 @@ local function action_win_game()
 	MP.end_game_jokers_received = false
 	MP.nemesis_deck_received = false
 	MP.GAME.won = true
+	MP.STATS.record_match(true)
 	win_game()
 end
 
@@ -254,6 +308,7 @@ local function action_lose_game()
 	MP.nemesis_deck_string = ""
 	MP.end_game_jokers_received = false
 	MP.nemesis_deck_received = false
+	MP.STATS.record_match(false)
 	G.STATE_COMPLETE = false
 	G.STATE = G.STATES.GAME_OVER
 end
@@ -264,7 +319,7 @@ local function action_lobby_options(options)
 		if k == "ruleset" then
 			if not MP.Rulesets[v] then
 				G.FUNCS.lobby_leave(nil)
-				MP.UTILS.overlay_message(localize({
+				MP.UI.UTILS.overlay_message(localize({
 					type = "variable",
 					key = "k_failed_to_join_lobby",
 					vars = { localize("k_ruleset_not_found") },
@@ -274,7 +329,7 @@ local function action_lobby_options(options)
 			local disabled = MP.Rulesets[v].is_disabled()
 			if disabled then
 				G.FUNCS.lobby_leave(nil)
-				MP.UTILS.overlay_message(
+				MP.UI.UTILS.overlay_message(
 					localize({ type = "variable", key = "k_failed_to_join_lobby", vars = { disabled } })
 				)
 				return
@@ -307,10 +362,7 @@ local function action_lobby_options(options)
 		end
 
 		MP.LOBBY.config[k] = parsed_v
-		if G.OVERLAY_MENU then
-			local config_uie = G.OVERLAY_MENU:get_UIE_by_ID(k .. "_toggle")
-			if config_uie then G.FUNCS.toggle(config_uie) end
-		end
+		if MP.UI.update_lobby_option_toggle then MP.UI.update_lobby_option_toggle(k) end
 		::continue::
 	end
 	if different_decks_before ~= MP.LOBBY.config.different_decks then
@@ -408,45 +460,7 @@ end
 
 local action_asteroid = action_asteroid
 	or function()
-		local hand_priority = {
-			["Flush Five"] = 1,
-			["Flush House"] = 2,
-			["Five of a Kind"] = 3,
-			["Straight Flush"] = 4,
-			["Four of a Kind"] = 5,
-			["Full House"] = 6,
-			["Flush"] = 7,
-			["Straight"] = 8,
-			["Three of a Kind"] = 9,
-			["Two Pair"] = 11,
-			["Pair"] = 12,
-			["High Card"] = 13,
-		}
-		local hand_type = "High Card"
-		local max_level = 0
-
-		for k, v in pairs(G.GAME.hands) do
-			if SMODS.is_poker_hand_visible(k) then
-				if
-					to_big(v.level) > to_big(max_level)
-					or (to_big(v.level) == to_big(max_level) and hand_priority[k] < hand_priority[hand_type])
-				then
-					hand_type = k
-					max_level = v.level
-				end
-			end
-		end
-		update_hand_text({ sound = "button", volume = 0.7, pitch = 0.8, delay = 0.3 }, {
-			handname = localize(hand_type, "poker_hands"),
-			chips = G.GAME.hands[hand_type].chips,
-			mult = G.GAME.hands[hand_type].mult,
-			level = G.GAME.hands[hand_type].level,
-		})
-		level_up_hand(nil, hand_type, false, -1)
-		update_hand_text(
-			{ sound = "button", volume = 0.7, pitch = 1.1, delay = 0 },
-			{ mult = 0, chips = 0, handname = "", level = "" }
-		)
+		if MP.UI.show_asteroid_hand_level_up then MP.UI.show_asteroid_hand_level_up() end
 	end
 
 local function action_sold_joker()
@@ -547,6 +561,7 @@ function G.FUNCS.load_end_game_jokers()
 		-- Reset the card area if loading fails to avoid inconsistent state
 		MP.end_game_jokers:remove()
 		MP.end_game_jokers:init(
+			---@diagnostic disable-next-line: param-type-mismatch
 			0,
 			0,
 			5 * G.CARD_W,
@@ -574,7 +589,10 @@ end
 
 local function action_get_end_game_jokers()
 	if not G.jokers or not G.jokers.cards then
-		Client.send("action:receiveEndGameJokers,keys:")
+		Client.send({
+			action = "receiveEndGameJokers",
+			keys = {},
+		})
 		return
 	end
 
@@ -588,7 +606,10 @@ local function action_get_end_game_jokers()
 	local jokers_save = G.jokers:save()
 	local jokers_encoded = MP.UTILS.str_pack_and_encode(jokers_save)
 
-	Client.send(string.format("action:receiveEndGameJokers,keys:%s", jokers_encoded))
+	Client.send({
+		action = "receiveEndGameJokers",
+		keys = jokers_encoded,
+	})
 end
 
 local function action_get_nemesis_deck()
@@ -596,20 +617,25 @@ local function action_get_nemesis_deck()
 	for _, card in ipairs(G.playing_cards) do
 		deck_str = deck_str .. ";" .. MP.UTILS.card_to_string(card)
 	end
-	Client.send(string.format("action:receiveNemesisDeck,cards:%s", deck_str))
+	Client.send({
+		action = "receiveNemesisDeck",
+		cards = deck_str,
+	})
 end
 
 local function action_send_game_stats()
 	if not MP.GAME.stats then
-		Client.send("action:nemesisEndGameStats")
+		Client.send({
+			action = "nemesisEndGameStats",
+		})
 		return
 	end
 
-	local stats_str = string.format(
-		"reroll_count:%d,reroll_cost_total:%d",
-		MP.GAME.stats.reroll_count,
-		MP.GAME.stats.reroll_cost_total
-	)
+	local stats = {
+		action = "nemesisEndGameStats",
+		reroll_count = MP.GAME.stats.reroll_count,
+		reroll_cost_total = MP.GAME.stats.reroll_cost_total,
+	}
 
 	-- Extract voucher keys where value is true and join them with a dash
 	local voucher_keys = ""
@@ -622,9 +648,9 @@ local function action_send_game_stats()
 	end
 
 	-- Add voucher keys to stats string
-	if voucher_keys ~= "" then stats_str = stats_str .. string.format(",vouchers:%s", voucher_keys) end
+	if voucher_keys ~= "" then stats.vouchers = voucher_keys end
 
-	Client.send(string.format("action:nemesisEndGameStats,%s", stats_str))
+	Client.send(stats)
 end
 
 function G.FUNCS.load_nemesis_deck()
@@ -691,6 +717,26 @@ local function action_receive_nemesis_deck(deck_str)
 end
 
 local function action_start_ante_timer(time)
+	local option = SMODS.Mods["Multiplayer"].config.timersfx or 1
+	local timersfx = (option == 1) or (option == 2 and G.timer_ante ~= G.GAME.round_resets.ante)
+	G.timer_ante = G.GAME.round_resets.ante
+
+	if timersfx then
+		for i = 1, 3 do
+			local wait_time = (0.15 * (i - 1))
+			G.E_MANAGER:add_event(Event({
+				blocking = false,
+				blockable = false,
+				trigger = "after",
+				delay = G.SETTINGS.GAMESPEED * wait_time,
+				func = function()
+					play_sound("timpani", 0.55 + 0.25 * i, 0.7)
+					play_sound("generic1", 0.75 + 0.25 * i, 0.7)
+					return true
+				end,
+			}))
+		end
+	end
 	if type(time) == "string" then time = tonumber(time) end
 	MP.GAME.timer = time
 	MP.GAME.timer_started = true
@@ -705,60 +751,93 @@ end
 
 -- #region Client to Server
 function MP.ACTIONS.create_lobby(gamemode)
-	Client.send(string.format("action:createLobby,gameMode:%s", gamemode))
+	Client.send({
+		action = "createLobby",
+		gameMode = gamemode,
+	})
 end
 
 function MP.ACTIONS.join_lobby(code)
-	Client.send(string.format("action:joinLobby,code:%s", code))
+	Client.send({
+		action = "joinLobby",
+		code = code,
+	})
 end
 
 function MP.ACTIONS.ready_lobby()
-	Client.send("action:readyLobby")
+	Client.send({
+		action = "readyLobby",
+	})
 end
 
 function MP.ACTIONS.unready_lobby()
-	Client.send("action:unreadyLobby")
+	Client.send({
+		action = "unreadyLobby",
+	})
 end
 
 function MP.ACTIONS.lobby_info()
-	Client.send("action:lobbyInfo")
+	Client.send({
+		action = "lobbyInfo",
+	})
 end
 
 function MP.ACTIONS.leave_lobby()
-	Client.send("action:leaveLobby")
+	-- Clear reconnect state on voluntary leave
+	reconnectToken = nil
+	lastLobbyCode = nil
+	Client.send({
+		action = "leaveLobby",
+	})
 end
 
 function MP.ACTIONS.start_game()
-	Client.send("action:startGame")
+	Client.send({
+		action = "startGame",
+	})
 end
 
 function MP.ACTIONS.ready_blind(e)
 	MP.GAME.next_blind_context = e
-	Client.send("action:readyBlind")
+	Client.send({
+		action = "readyBlind",
+	})
 end
 
 function MP.ACTIONS.unready_blind()
-	Client.send("action:unreadyBlind")
+	Client.send({
+		action = "unreadyBlind",
+	})
 end
 
 function MP.ACTIONS.stop_game()
-	Client.send("action:stopGame")
+	Client.send({
+		action = "stopGame",
+	})
 end
 
 function MP.ACTIONS.fail_round(hands_used)
 	if MP.LOBBY.config.no_gold_on_round_loss then G.GAME.blind.dollars = 0 end
 	if hands_used == 0 then return end
-	Client.send("action:failRound")
+	Client.send({
+		action = "failRound",
+	})
 end
 
 function MP.ACTIONS.version()
-	Client.send(string.format("action:version,version:%s", MULTIPLAYER_VERSION))
+	Client.send({
+		action = "version",
+		version = MULTIPLAYER_VERSION,
+	})
 end
 
 function MP.ACTIONS.set_location(location)
 	if MP.GAME.location == location then return end
 	MP.GAME.location = location
-	Client.send(string.format("action:setLocation,location:%s", location))
+	Client.send({
+		action = "setLocation",
+		location = location,
+	})
 end
 
 ---@param score number
@@ -776,111 +855,190 @@ function MP.ACTIONS.play_hand(score, hands_left)
 	if MP.INSANE_INT.greater_than(insane_int_score, MP.GAME.highest_score) then
 		MP.GAME.highest_score = insane_int_score
 	end
-	Client.send(string.format("action:playHand,score:" .. fixed_score .. ",handsLeft:%d", hands_left))
+	Client.send({
+		action = "playHand",
+		score = fixed_score,
+		handsLeft = hands_left,
+	})
 end
 
 function MP.ACTIONS.lobby_options()
-	local msg = "action:lobbyOptions"
+	---@type table<string, any>
+	local msg = {
+		action = "lobbyOptions",
+	}
 	for k, v in pairs(MP.LOBBY.config) do
-		msg = msg .. string.format(",%s:%s", k, tostring(v))
+		msg[tostring(k)] = v
 	end
 	Client.send(msg)
 end
 
 function MP.ACTIONS.set_ante(ante)
-	Client.send(string.format("action:setAnte,ante:%d", ante))
+	Client.send({
+		action = "setAnte",
+		ante = ante,
+	})
 end
 
 function MP.ACTIONS.new_round()
 	MP.GAME.duplicate_end = false
 	MP.GAME.round_ended = false
-	Client.send("action:newRound")
+	Client.send({
+		action = "newRound",
+	})
 end
 
 function MP.ACTIONS.set_furthest_blind(furthest_blind)
-	Client.send(string.format("action:setFurthestBlind,furthestBlind:%d", furthest_blind))
+	Client.send({
+		action = "setFurthestBlind",
+		furthestBlind = furthest_blind,
+	})
 end
 
 function MP.ACTIONS.skip(skips)
-	Client.send("action:skip,skips:" .. tostring(skips))
+	Client.send({
+		action = "skip",
+		skips = skips,
+	})
 end
 
 function MP.ACTIONS.send_phantom(key)
-	Client.send("action:sendPhantom,key:" .. key)
+	Client.send({
+		action = "sendPhantom",
+		key = key,
+	})
 end
 
 function MP.ACTIONS.remove_phantom(key)
-	Client.send("action:removePhantom,key:" .. key)
+	Client.send({
+		action = "removePhantom",
+		key = key,
+	})
 end
 
 function MP.ACTIONS.asteroid()
-	Client.send("action:asteroid")
+	Client.send({
+		action = "asteroid",
+	})
 end
 
 function MP.ACTIONS.sold_joker()
-	Client.send("action:soldJoker")
+	Client.send({
+		action = "soldJoker",
+	})
 end
 
 function MP.ACTIONS.lets_go_gambling_nemesis()
-	Client.send("action:letsGoGamblingNemesis")
+	Client.send({
+		action = "letsGoGamblingNemesis",
+	})
 end
 
 function MP.ACTIONS.eat_pizza(discards)
-	Client.send("action:eatPizza,whole:" .. tostring(discards))
+	Client.send({
+		action = "eatPizza",
+		whole = discards,
+	})
 end
 
 function MP.ACTIONS.spent_last_shop(amount)
-	Client.send("action:spentLastShop,amount:" .. tostring(amount))
+	Client.send({
+		action = "spentLastShop",
+		amount = amount,
+	})
 end
 
 function MP.ACTIONS.magnet()
-	Client.send("action:magnet")
+	Client.send({
+		action = "magnet",
+	})
 end
 
 function MP.ACTIONS.magnet_response(key)
-	Client.send("action:magnetResponse,key:" .. key)
+	Client.send({
+		action = "magnetResponse",
+		key = key,
+	})
 end
 
 function MP.ACTIONS.get_end_game_jokers()
-	Client.send("action:getEndGameJokers")
+	Client.send({
+		action = "getEndGameJokers",
+	})
 end
 
 function MP.ACTIONS.get_nemesis_deck()
-	Client.send("action:getNemesisDeck")
+	Client.send({
+		action = "getNemesisDeck",
+	})
 end
 
 function MP.ACTIONS.send_game_stats()
-	Client.send("action:sendGameStats")
+	Client.send({
+		action = "sendGameStats",
+	})
 	action_send_game_stats()
 end
 
 function MP.ACTIONS.request_nemesis_stats()
-	Client.send("action:endGameStatsRequested")
+	Client.send({
+		action = "endGameStatsRequested",
+	})
 end
 
 function MP.ACTIONS.start_ante_timer()
-	Client.send("action:startAnteTimer,time:" .. tostring(MP.GAME.timer))
+	Client.send({
+		action = "startAnteTimer",
+		time = MP.GAME.timer,
+	})
 	action_start_ante_timer(MP.GAME.timer)
 end
 
 function MP.ACTIONS.pause_ante_timer()
-	Client.send("action:pauseAnteTimer,time:" .. tostring(MP.GAME.timer))
+	Client.send({
+		action = "pauseAnteTimer",
+		time = MP.GAME.timer,
+	})
 	action_pause_ante_timer(MP.GAME.timer) -- TODO
 end
 
 function MP.ACTIONS.fail_timer()
-	Client.send("action:failTimer")
+	Client.send({
+		action = "failTimer",
+	})
 end
 
 function MP.ACTIONS.sync_client()
-	Client.send("action:syncClient,isCached:" .. tostring(_RELEASE_MODE))
+	Client.send({
+		action = "syncClient",
+		isCached = _RELEASE_MODE,
+	})
+end
+
+function MP.ACTIONS.modded(modId, modAction, params, target)
+	local msg = {
+		action = "moddedAction",
+		modId = modId,
+		modAction = modAction,
+	}
+	if params then
+		for k, v in pairs(params) do
+			msg[k] = v
+		end
+	end
+	if target then
+		msg.target = target
+	end
+	Client.send(msg)
 end
 
 -- #endregion Client to Server
 
 -- Utils
 function MP.ACTIONS.connect()
-	Client.send("connect")
+	Client.send({
+		action = "connect",
+	})
 end
 
 function MP.ACTIONS.update_player_usernames()
@@ -909,7 +1067,20 @@ function Game:update(dt)
 	repeat
 		local msg = love.thread.getChannel("networkToUi"):pop()
 		if msg then
-			local parsedAction = string_to_table(msg)
+			-- horribly messy catch
+			if string.sub(msg, 1, 1) == "a" then
+				if msg ~= "action:keepAlive" then
+					local networkToUiChannel = love.thread.getChannel("networkToUi")
+					networkToUiChannel:push(json.encode({
+						action = "error",
+						message = "Attempting to connect to outdated server",
+					}))
+					networkToUiChannel:push('{"action":"disconnected"}')
+				end
+				return
+			end
+
+			local parsedAction = json.decode(msg)
 
 			if not ((parsedAction.action == "keepAlive") or (parsedAction.action == "keepAliveAck")) then
 				local log = string.format("Client got %s message: ", parsedAction.action)
@@ -936,7 +1107,13 @@ function Game:update(dt)
 			elseif parsedAction.action == "disconnected" then
 				action_disconnected()
 			elseif parsedAction.action == "joinedLobby" then
-				action_joinedLobby(parsedAction.code, parsedAction.type)
+				action_joinedLobby(parsedAction.code, parsedAction.type, parsedAction.reconnectToken)
+			elseif parsedAction.action == "rejoinedLobby" then
+				action_rejoinedLobby(parsedAction.code, parsedAction.type, parsedAction.reconnectToken)
+			elseif parsedAction.action == "enemyDisconnected" then
+				action_enemyDisconnected()
+			elseif parsedAction.action == "enemyReconnected" then
+				action_enemyReconnected()
 			elseif parsedAction.action == "lobbyInfo" then
 				action_lobbyInfo(
 					parsedAction.host,
@@ -1004,6 +1181,11 @@ function Game:update(dt)
 				action_start_ante_timer(parsedAction.time)
 			elseif parsedAction.action == "pauseAnteTimer" then
 				action_pause_ante_timer(parsedAction.time)
+			elseif parsedAction.action == "moddedAction" then
+				local registry = MP.MOD_ACTIONS[parsedAction.modId]
+				if registry and registry[parsedAction.modAction] then
+					registry[parsedAction.modAction](parsedAction)
+				end
 			elseif parsedAction.action == "error" then
 				action_error(parsedAction.message)
 			elseif parsedAction.action == "keepAlive" then

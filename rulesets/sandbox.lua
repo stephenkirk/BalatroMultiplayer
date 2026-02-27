@@ -1,379 +1,215 @@
 MP.SANDBOX = {}
 
+-- Centralized joker mappings: defines sandbox variants, their vanilla counterparts, and rotation status
+MP.SANDBOX.joker_mappings = {
+	-- Active jokers in rotation
+	{ sandbox = "j_mp_misprint_sandbox", vanilla = "j_misprint", active = true },
+	{ sandbox = "j_mp_castle_sandbox", vanilla = "j_castle", active = true },
+	{ sandbox = "j_mp_mail_sandbox", vanilla = "j_mail", active = true },
+	{ sandbox = "j_mp_square_sandbox", vanilla = "j_square", active = true },
+	{ sandbox = "j_mp_throwback_sandbox", vanilla = "j_throwback", active = true },
+	{ sandbox = "j_mp_vampire_sandbox", vanilla = "j_vampire", active = true },
+	{ sandbox = "j_mp_steel_joker_sandbox", vanilla = "j_steel_joker", active = true },
+	{ sandbox = "j_mp_baseball_sandbox", vanilla = "j_baseball", active = true },
+	{ sandbox = "j_mp_hit_the_road_sandbox", vanilla = "j_hit_the_road", active = true },
+	{ sandbox = "j_mp_golden_ticket_sandbox", vanilla = "j_ticket", active = true },
+	-- Idol variants (all map to same vanilla joker)
+	{ sandbox = "j_mp_idol_sandbox_zealot", vanilla = "j_idol", active = true },
+	{ sandbox = "j_mp_idol_sandbox_collector", vanilla = "j_idol", active = true },
+
+	-- Out of rotation
+	{ sandbox = "j_mp_bloodstone_sandbox", vanilla = "j_bloodstone", active = false },
+	{ sandbox = "j_mp_cloud_9_sandbox", vanilla = "j_cloud_9", active = false },
+	{ sandbox = "j_mp_constellation_sandbox", vanilla = "j_constellation", active = false },
+	{ sandbox = "j_mp_faceless_sandbox", vanilla = "j_faceless", active = false },
+	{ sandbox = "j_mp_juggler_sandbox", vanilla = "j_juggler", active = false },
+	{ sandbox = "j_mp_loyalty_card_sandbox", vanilla = "j_loyalty_card", active = false },
+	{ sandbox = "j_mp_lucky_cat_sandbox", vanilla = "j_lucky_cat", active = false },
+	{ sandbox = "j_mp_magnet_sandbox", vanilla = nil, active = false },
+	{ sandbox = "j_mp_order_sandbox", vanilla = "j_order", active = false },
+	{ sandbox = "j_mp_photograph_sandbox", vanilla = "j_photograph", active = false },
+	{ sandbox = "j_mp_ride_the_bus_sandbox", vanilla = "j_ride_the_bus", active = false },
+	{ sandbox = "j_mp_runner_sandbox", vanilla = "j_runner", active = false },
+	{ sandbox = "j_mp_satellite_sandbox", vanilla = "j_satellite", active = false },
+
+	-- Extra Credit jokers
+	{ sandbox = "j_mp_alloy_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_ambrosia_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_bobby_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_candynecklace_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_chainlightning_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_clowncar_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_clowncollege_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_couponsheet_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_doublerainbow_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_espresso_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_farmer_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_forklift_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_gofish_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_hoarder_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_jokalisa_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_jokeroftheyear_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_lucky7_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_montehaul_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_pocketaces_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_pyromancer_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_shipoftheseus_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_starfruit_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_trafficlight_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_tuxedo_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_warlock_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+	{ sandbox = "j_mp_werewolf_sandbox", vanilla = nil, active = true, group = "extra_credit" },
+}
+
+--- Returns list of active sandbox joker keys
+--- @return table List of sandbox joker keys that are active
+function MP.SANDBOX.get_active_sandbox_jokers()
+	local active = {}
+	for _, mapping in ipairs(MP.SANDBOX.joker_mappings) do
+		if mapping.active then table.insert(active, mapping.sandbox) end
+	end
+	return active
+end
+
+--- Returns list of unique vanilla joker keys to ban
+--- @return table List of vanilla joker keys to silently ban
+function MP.SANDBOX.get_vanilla_bans()
+	local bans = {}
+	local seen = {}
+	for _, mapping in ipairs(MP.SANDBOX.joker_mappings) do
+		if mapping.active and mapping.vanilla and not seen[mapping.vanilla] then
+			table.insert(bans, mapping.vanilla)
+			seen[mapping.vanilla] = true
+		end
+	end
+	return bans
+end
+
+--- Centralized allowlist check for sandbox jokers
+--- @param joker_key string The key of the joker to check (e.g., "j_mp_mail_sandbox")
+--- @return boolean true if the joker is allowed in the sandbox ruleset and in a multiplayer lobby
+function MP.SANDBOX.is_joker_allowed(joker_key)
+	if not MP.is_ruleset_active("sandbox") then return false end
+
+	for _, mapping in ipairs(MP.SANDBOX.joker_mappings) do
+		if mapping.active and mapping.sandbox == joker_key then return true end
+	end
+
+	return false
+end
+
 MP.Ruleset({
 	key = "sandbox",
-	standard = true,
 	multiplayer_content = true,
-	banned_jokers = {
-		"j_cloud_9",
-		"j_hanging_chad",
-		"j_bloodstone",
-	},
-	banned_consumables = {
-		"c_justice",
-	},
+	banned_jokers = {},
+	banned_silent = MP.SANDBOX.get_vanilla_bans(),
+	banned_consumables = { "c_ouija", "c_ectoplasm" },
 	banned_vouchers = {},
 	banned_enhancements = {},
-	banned_tags = { "tag_rare" },
+	banned_tags = { "tag_rare", "tag_juggle", "tag_investment" },
 	banned_blinds = {},
 
-	reworked_jokers = {
-		"j_mp_cloud_9",
-		"j_mp_bloodstone2",
-		"j_mp_hanging_chad",
-		-- "j_idol",
-		-- "j_square",
-	},
-	reworked_consumables = {},
+	-- Shuffle reworked jokers to randomize the overview panel order
+	-- Only show extra_credit jokers + idol jokers + error jokers in overview (hide other sandbox jokers)
+	reworked_jokers = (function()
+		local jokers = {}
+		local idol_jokers = {}
+
+		-- Collect extra_credit and idol jokers separately
+		for _, mapping in ipairs(MP.SANDBOX.joker_mappings) do
+			if mapping.active then
+				if mapping.group == "extra_credit" then
+					table.insert(jokers, mapping.sandbox)
+				elseif mapping.sandbox:find("idol") then
+					table.insert(idol_jokers, mapping.sandbox)
+				end
+			end
+		end
+
+		-- Add error jokers (for overview only, not in actual pool)
+		for i = 1, 14 do
+			table.insert(jokers, "j_mp_error_sandbox_" .. i)
+		end
+
+		-- final vanilla stuff
+		table.insert(jokers, "j_hanging_chad")
+
+		-- Fisher-Yates shuffle
+		for i = #jokers, 2, -1 do
+			local j = math.random(1, i)
+			jokers[i], jokers[j] = jokers[j], jokers[i]
+		end
+
+		-- Insert idol jokers in the middle
+		local middle = math.floor(#jokers / 2) + 1
+		for i, idol in ipairs(idol_jokers) do
+			table.insert(jokers, middle + i - 1, idol)
+		end
+
+		return jokers
+	end)(),
+	reworked_consumables = { "c_mp_ouija_standard", "c_mp_ectoplasm_sandbox" },
 	reworked_vouchers = {},
-	reworked_enhancements = {
-		-- "m_glass",
-	},
+	reworked_enhancements = { "m_mp_sandbox_display_glass" },
 	reworked_blinds = {},
-	reworked_tags = { "tag_mp_sandbox_rare" },
+	reworked_tags = { "tag_mp_gambling_sandbox", "tag_mp_juggle_sandbox", "tag_mp_investment_sandbox" },
 
 	create_info_menu = function()
-		return {
-			{
-				n = G.UIT.R,
-				config = {
-					align = "tm",
-				},
-				nodes = {
-					MP.UI.BackgroundGrouping(localize("k_has_multiplayer_content"), {
-						{
-							n = G.UIT.T,
-							config = {
-								text = localize("k_yes"),
-								scale = 0.8,
-								colour = G.C.GREEN,
-							},
-						},
-					}, { col = true, text_scale = 0.6 }),
-					{
-						n = G.UIT.C,
-						config = {
-							minw = 0.1,
-							minh = 0.1,
-						},
-					},
-					MP.UI.BackgroundGrouping(localize("k_forces_lobby_options"), {
-						{
-							n = G.UIT.T,
-							config = {
-								text = localize("k_no"),
-								scale = 0.8,
-								colour = G.C.RED,
-							},
-						},
-					}, { col = true, text_scale = 0.6 }),
-					{
-						n = G.UIT.C,
-						config = {
-							minw = 0.1,
-							minh = 0.1,
-						},
-					},
-					MP.UI.BackgroundGrouping(localize("k_forces_gamemode"), {
-						{
-							n = G.UIT.T,
-							config = {
-								text = localize("k_no"),
-								scale = 0.8,
-								colour = G.C.RED,
-							},
-						},
-					}, { col = true, text_scale = 0.6 }),
-				},
-			},
-			{
-				n = G.UIT.R,
-				config = {
-					minw = 0.05,
-					minh = 0.05,
-				},
-			},
-			{
-				n = G.UIT.R,
-				config = {
-					align = "cl",
-					padding = 0.1,
-				},
-				nodes = {
-					{
-						n = G.UIT.T,
-						config = {
-							text = localize("k_sandbox_description"),
-							scale = 0.6,
-							colour = G.C.UI.TEXT_LIGHT,
-						},
-					},
-				},
-			},
-		}
-	end,
-
-	is_disabled = function(self)
-		return "temporarily offline while the mothership sorts itself out"
-		-- if not MP.INTEGRATIONS.TheOrder then
-		-- 	return localize("k_ruleset_disabled_the_order_required")
-		-- end
-		-- return false
+		return MP.UI.CreateRulesetInfoMenu({
+			multiplayer_content = true,
+			forced_lobby_options = true,
+			description_key = "k_sandbox_description",
+		})
 	end,
 
 	forced_lobby_options = true,
 
 	force_lobby_options = function(self)
 		MP.LOBBY.config.preview_disabled = true
-		MP.LOBBY.config.different_seeds = true
+		MP.LOBBY.config.the_order = true
+		MP.LOBBY.config.starting_lives = 4
 		return true
 	end,
 }):inject()
 
--- Oops artwork - no functional changes but visual identity for sandbox
--- SMODS.Atlas({
--- 	key = "sandbox_oops",
--- 	path = "j_sandbox_oops2.png",
--- 	px = 71,
--- 	py = 95,
--- })
+--- Randomly selects one idol variant to be available in the sandbox ruleset
+--- Bans the other two idol variants to ensure only one is available per game
+--- Uses pseudorandom selection based on the lobby seed for consistency across players
+--- @return nil
+local function select_random_idol()
+	local idol_keys = {
+		"j_mp_idol_sandbox_zealot",
+		"j_mp_idol_sandbox_collector",
+	}
+	table.sort(idol_keys)
 
--- MP.ReworkCenter({
--- 	key = "j_oops",
--- 	atlas = "mp_sandbox_oops",
--- 	pos = { x = 0, y = 0 },
--- 	ruleset = "sandbox",
--- 	silent = true,
--- })
+	-- Pseudorandom shuffle using the lobby seed so all players get the same idol
+	pseudoshuffle(idol_keys, pseudoseed("idol_selection_mp_sandbox"))
 
--- MP.ReworkCenter({
--- 	key = "j_square",
--- 	ruleset = "sandbox",
--- 	config = { extra = { chips = 64, chip_mod = 4 } },
--- })
-
--- MP.ReworkCenter({
--- 	key = "j_idol",
--- 	ruleset = "sandbox",
--- 	rarity = 3,
--- 	cost = 8,
--- })
-
--- Global state for persistent bias across bloodstone calls
-if not MP.bloodstone_bias then
-	MP.starting_bloodstone_bias = 0.2
-	MP.bloodstone_bias = MP.starting_bloodstone_bias
-end
-
--- your rng complaints have been noted and filed accordingly
-function cope_and_seethe_check(actual_odds)
-	if actual_odds >= 1 then return true end
-
-	-- how much easier (30%) do we make it for each successive roll?
-	local step = -0.3
-	local roll = pseudorandom("bloodstone") + MP.bloodstone_bias
-
-	if roll < actual_odds then
-		MP.bloodstone_bias = MP.starting_bloodstone_bias
-		return true
-	else
-		MP.bloodstone_bias = MP.bloodstone_bias + step
-		return false
+	-- Ban all idols except the first one (which is now randomly selected)
+	for i = 2, #idol_keys do
+		G.GAME.banned_keys[idol_keys[i]] = true
 	end
 end
 
-SMODS.Joker({
-	key = "bloodstone2",
-	unlocked = true,
-	discovered = true,
-	blueprint_compat = true,
-	perishable_compat = true,
-	eternal_compat = true,
-	rarity = 3,
-	cost = 7,
-	pos = { x = 0, y = 8 },
-	no_collection = true,
-	in_pool = function(self)
-		return MP.LOBBY.config.ruleset == "ruleset_mp_sandbox" and MP.LOBBY.code
-	end,
-	config = { extra = { odds = 2, Xmult = 1.5 }, mp_sticker_balanced = true },
-	loc_vars = function(self, info_queue, card)
-		return {
-			vars = {
-				"" .. (G.GAME and G.GAME.probabilities.normal or 1),
-				card.ability.extra.odds,
-				card.ability.extra.Xmult,
-			},
-		}
-	end,
-	calculate = function(self, card, context)
-		if context.cardarea == G.play and context.individual then
-			if context.other_card:is_suit("Hearts") then
-				local bloodstone_hit = cope_and_seethe_check(G.GAME.probabilities.normal / card.ability.extra.odds)
-				if bloodstone_hit then
-					return {
-						extra = { x_mult = card.ability.extra.Xmult },
-						message = G.GAME.probabilities.normal < 2 and "Cope!" or nil,
-						sound = "voice2",
-						volume = 0.3,
-						card = card,
-					}
-				end
+local apply_bans_ref = MP.ApplyBans
+function MP.ApplyBans()
+	local ret = apply_bans_ref()
+
+	-- Apply sandbox-specific idol selection when in sandbox ruleset
+	if MP.is_ruleset_active("sandbox") then
+		select_random_idol()
+
+		if SMODS.Mods["extracredit"] and SMODS.Mods["extracredit"].can_load then
+			print("Banning sandbox jokers")
+			for _, mapping in ipairs(MP.SANDBOX.joker_mappings) do
+				if mapping.group == "extra_credit" then G.GAME.banned_keys[mapping.sandbox] = true end
 			end
 		end
-	end,
-})
+	end
 
-SMODS.Joker({
-	key = "cloud_9",
-	no_collection = true,
-	unlocked = true,
-	discovered = true,
-	blueprint_compat = false,
-	perishable_compat = true,
-	eternal_compat = true,
-	rarity = 2,
-	cost = 7,
-	pos = { x = 7, y = 12 },
-	config = { extra = 2, mp_sticker_balanced = true },
-	loc_vars = function(self, info_queue, card)
-		local nine_tally = 0
-		if G.playing_cards ~= nil then
-			for k, v in pairs(G.playing_cards) do
-				if v:get_id() == 9 then nine_tally = nine_tally + 1 end
-			end
-		end
+	return ret
+end
 
-		return {
-			vars = {
-				card.ability.extra,
-				(math.min(nine_tally, 4) + math.max(nine_tally - 4, 0) * card.ability.extra) or 0,
-			},
-		}
-	end,
-	in_pool = function(self)
-		return MP.LOBBY.config.ruleset == "ruleset_mp_sandbox" and MP.LOBBY.code
-	end,
-	calc_dollar_bonus = function(self, card)
-		local nine_tally = 0
-		for k, v in pairs(G.playing_cards) do
-			if v:get_id() == 9 then nine_tally = nine_tally + 1 end
-		end
-		return (math.min(nine_tally, 4) + math.max(nine_tally - 4, 0) * card.ability.extra) or 0
-	end,
-})
-
-SMODS.Atlas({
-	key = "sandbox_rare",
-	path = "tag_rare.png",
-	px = 32,
-	py = 32,
-})
-
--- Tag: 1 in 2 chance to generate a rare joker in shop
-SMODS.Tag({
-	key = "sandbox_rare",
-	atlas = "sandbox_rare",
-	object_type = "Tag",
-	dependencies = {
-		items = {},
-	},
-	in_pool = function(self)
-		return MP.LOBBY.config.ruleset == "ruleset_mp_sandbox" and MP.LOBBY.code
-	end,
-	name = "Rare Tag",
-	discovered = true,
-	order = 2,
-	min_ante = 2, -- less degeneracy
-	no_collection = true,
-	config = {
-		type = "store_joker_create",
-		odds = 2,
-	},
-	requires = "j_blueprint",
-	loc_vars = function(self)
-		return { vars = { G.GAME.probabilities.normal or 1, self.config.odds } }
-	end,
-	apply = function(self, tag, context)
-		if context.type == "store_joker_create" then
-			local card = nil
-			-- 1 in 2 chance to proc
-			if pseudorandom("tagroll") < G.GAME.probabilities.normal / tag.config.odds then
-				-- count owned rare jokers to prevent duplicates
-				local rares_owned = { 0 }
-				for k, v in ipairs(G.jokers.cards) do
-					if v.config.center.rarity == 3 and not rares_owned[v.config.center.key] then
-						rares_owned[1] = rares_owned[1] + 1
-						rares_owned[v.config.center.key] = true
-					end
-				end
-
-				-- only proc if unowned rares exist
-				-- funny edge case that i've never seen happen, but if localthunk saw it i will obey
-				if #G.P_JOKER_RARITY_POOLS[3] > rares_owned[1] then
-					card = create_card("Joker", context.area, nil, 1, nil, nil, nil, "rta")
-					create_shop_card_ui(card, "Joker", context.area)
-					card.states.visible = false
-					tag:yep("+", G.C.RED, function()
-						card:start_materialize()
-						card.ability.couponed = true -- free card
-						card:set_cost()
-						return true
-					end)
-				else
-					tag:nope() -- all rares owned
-				end
-			else
-				tag:nope() -- failed roll
-			end
-			tag.triggered = true
-			return card
-		end
-	end,
-})
-
--- Standard pack card creation for sandbox ruleset
--- Skips glass enhancement (excluded from enhancement pool)
--- 40% chance (0.6 threshold) for any enhancement to be applied (like vanilla)
--- function sandbox_create_card(self, card, i)
--- 	local enhancement_pool = {}
-
--- 	-- Skip glass
--- 	for k, v in pairs(G.P_CENTER_POOLS["Enhanced"]) do
--- 		if v.key ~= "m_glass" then
--- 			enhancement_pool[#enhancement_pool + 1] = v.key
--- 		end
--- 	end
-
--- 	local ante_rng = MP.ante_based()
--- 	local roll = pseudorandom(pseudoseed("stdc1" .. ante_rng))
--- 	local enhancement = roll > 0.6 and pseudorandom_element(enhancement_pool, pseudoseed("stdc2" .. ante_rng)) or nil
-
--- 	local s_append = ""
--- 	local b_append = ante_rng .. s_append
-
--- 	local _edition = poll_edition("standard_edition" .. b_append, 2, true)
--- 	local _seal = SMODS.poll_seal({ mod = 10, key = "stdseal" .. ante_rng })
-
--- 	return {
--- 		set = "Base",
--- 		edition = _edition,
--- 		seal = _seal,
--- 		enhancement = enhancement,
--- 		area = G.pack_cards,
--- 		skip_materialize = true,
--- 		soulable = true,
--- 		key_append = "sta" .. s_append,
--- 	}
--- end
-
--- for k, v in ipairs(G.P_CENTER_POOLS.Booster) do
--- 	if v.kind and v.kind == "Standard" then
--- 		MP.ReworkCenter({
--- 			key = v.key,
--- 			ruleset = "sandbox",
--- 			silent = true,
--- 			create_card = sandbox_create_card,
--- 		})
--- 	end
--- end
+-- debugging hotswitch
+MP.sandbox_no_collection = not MP.EXPERIMENTAL.show_sandbox_collection
