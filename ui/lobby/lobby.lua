@@ -501,6 +501,27 @@ end
 
 function G.FUNCS.copy_to_clipboard(e)
 	MP.UTILS.copy_to_clipboard(MP.LOBBY.code)
+
+	local text_config = e.children[1].children[1].config
+	local original_text = text_config.text
+	local original_colour = e.config.colour
+
+	text_config.text = localize("b_copied")
+	e.config.colour = G.C.BLUE
+	e.UIBox:recalculate()
+
+	G.E_MANAGER:add_event(Event({
+		trigger = "after",
+		delay = 1.5,
+		blockable = false,
+		blocking = false,
+		func = function()
+			text_config.text = original_text
+			e.config.colour = original_colour
+			e.UIBox:recalculate()
+			return true
+		end,
+	}))
 end
 
 function G.FUNCS.reconnect(e)
