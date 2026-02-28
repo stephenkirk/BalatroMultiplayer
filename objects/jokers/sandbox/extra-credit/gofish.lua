@@ -23,7 +23,7 @@ SMODS.Joker({
 			juice_card_until(card, function()
 				return not card.ability.extra.fished
 			end, true)
-		elseif context.before and not context.blueprint and not card.ability.extra.fished then
+		elseif context.before and not context.blueprint and not card.ability.extra.fished and G.GAME.current_round.fish_rank then
 			for _, scoring_card in ipairs(context.scoring_hand) do
 				if scoring_card.base.value == G.GAME.current_round.fish_rank.rank and not scoring_card.debuff then
 					card.ability.extra.fish = card.ability.extra.fish or {}

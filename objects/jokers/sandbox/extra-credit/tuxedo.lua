@@ -22,6 +22,7 @@ SMODS.Joker({
 		if
 			context.cardarea == G.play
 			and context.repetition
+			and G.GAME.current_round.tuxedo_card
 			and context.other_card:is_suit(G.GAME.current_round.tuxedo_card.suit)
 		then
 			return {
@@ -32,6 +33,7 @@ SMODS.Joker({
 		elseif
 			context.repetition
 			and context.cardarea == G.hand
+			and G.GAME.current_round.tuxedo_card
 			and context.other_card:is_suit(G.GAME.current_round.tuxedo_card.suit)
 		then
 			if next(context.card_effects[1]) or #context.card_effects > 1 then

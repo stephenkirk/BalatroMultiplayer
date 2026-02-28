@@ -30,6 +30,7 @@ SMODS.Joker({
 			and context.end_of_round
 			and context.individual
 			and not context.repetition
+			and G.GAME.current_round.farmer_card
 			and context.other_card:is_suit(G.GAME.current_round.farmer_card.suit)
 		then
 			delay(0.15)
