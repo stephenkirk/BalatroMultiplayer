@@ -9,8 +9,6 @@ SMODS.Back({
 	apply = function(self)
 		-- we need to fucking generate the seed early this is infuriating
 		local seed = G._MP_SET_SEED
-		local seeded = false
-		if seed then seeded = true end
 		G.GAME.pseudorandom.seed = seed or generate_starting_seed()
 		G.GAME.modifiers.mp_cocktail = {}
 		G.GAME.modifiers.mp_cocktail_sticker = {}
@@ -105,10 +103,11 @@ function MP.get_cocktail_decks(cull)
 	end)
 	if cull then
 		local _ret = {}
-		for i, v in ipairs(ret) do
-			if MP.cocktail_cfg_readpos(i, true) == "1" then
+		for i in ipairs(ret) do
+			local pos = MP.cocktail_cfg_readpos(i, true)
+			if pos == "1" then
 				_ret[#_ret + 1] = ret[i]
-			elseif MP.cocktail_cfg_readpos(i, true) == "2" then
+			elseif pos == "2" then
 				forced[#forced + 1] = ret[i]
 			end
 		end
@@ -127,6 +126,15 @@ function Back:change_to(new_back)
 		return ret
 	end
 	return change_to_ref(self, new_back)
+end
+
+local function deck_available_at_stake(deck_key, stake_index)
+	if (not stake_index) or stake_index <= 1 then return true end
+	local profile = G.SETTINGS and G.SETTINGS.profile
+	if not profile or not G.PROFILES or not G.PROFILES[profile] then return true end
+	local stakes = G.PROFILES[profile].progress and G.PROFILES[profile].progress.stakes
+	if not stakes then return true end
+	return (stakes[deck_key] or 0) >= stake_index - 1
 end
 
 local function is_cocktail_select(card)
@@ -164,10 +172,23 @@ function Card:click() -- i'd rather deal with the cardarea but this is fine i su
 					{ card_limit = 5, type = "title", highlight_limit = 999, collection = true }
 				)
 			end
-			local decks = MP.get_cocktail_decks()
-			local cfg = SMODS.Mods["Multiplayer"].config
-			for i, v in ipairs(decks) do
-				local row = math.floor((((i - 1) / #decks) * 2) + 1)
+			local all_decks = MP.get_cocktail_decks()
+			local current_stake = 1
+			if MP.LOBBY.code then
+				current_stake = tonumber(MP.LOBBY.config.different_decks and MP.LOBBY.deck.stake or MP.LOBBY.config.stake) or 1
+			end
+			local display_decks = {}
+			for i, v in ipairs(all_decks) do
+				if deck_available_at_stake(v, current_stake) then
+					display_decks[#display_decks + 1] = { key = v, cfg_pos = i }
+				end
+			end
+			if #display_decks == 0 then
+				for i, v in ipairs(all_decks) do display_decks[#display_decks + 1] = { key = v, cfg_pos = i } end
+			end
+			for j, deck_info in ipairs(display_decks) do
+				local v = deck_info.key
+				local row = math.floor((((j - 1) / #display_decks) * 2) + 1)
 				G.GAME.viewed_back = G.P_CENTERS[v]
 				local card = Card(
 					G.ROOM.T.x + 0.2 * G.ROOM.T.w / 2,
@@ -176,19 +197,19 @@ function Card:click() -- i'd rather deal with the cardarea but this is fine i su
 					G.CARD_H,
 					pseudorandom_element(G.P_CARDS),
 					G.P_CENTERS.c_base,
-					{ playing_card = i, bypass_back = G.P_CENTERS[v].pos }
+					{ playing_card = j, bypass_back = G.P_CENTERS[v].pos }
 				)
 				G.cocktail_select[row]:emplace(card)
 				card.sprite_facing = "back"
 				card.facing = "back"
 				card.mp_cocktail_select = v
-				local num = MP.cocktail_cfg_readpos(i)
-				card.highlighted = tonumber(num) >= 1 and true or false
+				local num = MP.cocktail_cfg_readpos(deck_info.cfg_pos)
+				card.highlighted = (tonumber(num) or 0) >= 1 and true or false
 				card.mp_cocktail_forced = num == "2" and true or false
 			end
 			G.GAME.viewed_back = G.P_CENTERS["b_mp_cocktail"]
 			MP.show_cocktail_decks = MP.cocktail_cfg_readpos("show") ~= "H" and true or false
-			deck_tables = {}
+			local deck_tables = {}
 			for i = 1, #G.cocktail_select do
 				deck_tables[i] = {
 					n = G.UIT.R,
@@ -526,7 +547,6 @@ function MP.cocktail_cfg_edit(bool, deck) -- strings are easier to send, and it'
 end
 
 function MP.cocktail_cfg_readpos(pos, construct)
-	local decks = MP.get_cocktail_decks() -- copypasted code. unsure how to make this less messy without making it more messy
 	local cfg = SMODS.Mods["Multiplayer"].config
 	if pos == "show" then pos = #cfg.cocktail end
 	if construct then return MP.cocktail_cfg_get():sub(pos, pos) end
@@ -563,8 +583,7 @@ local localize_ref = localize
 function localize(args, misc_cat)
 	if args and type(args) == "table" and args.key then
 		local ret = localize_ref(args, misc_cat)
-		local key = args.key or args.node and args.node.config.center.key or "NULL"
-		if args.type == "name_text" and key == "b_mp_cocktail" then
+		if args.type == "name_text" and args.key == "b_mp_cocktail" then
 			if MP.cocktail_check_edited() then return ret .. "*" end
 		end
 		return ret
