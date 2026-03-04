@@ -888,6 +888,13 @@ return {
 					"{C:red}-1{} hand, {C:red}-1{} discard, or {C:red}-1{} hand size",
 				},
 			},
+			c_mp_sandbox_wraith = {
+				name = "Wraith",
+				text = {
+					"Creates a random {C:dark_edition}Negative{}",
+					"{C:green}Uncommon{} Joker",
+				},
+			},
 		},
 	},
 	misc = {
