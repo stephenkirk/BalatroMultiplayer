@@ -5,7 +5,7 @@ SMODS.Joker({
 	discovered = true,
 	blueprint_compat = true,
 	rarity = 2,
-	cost = 5,
+	cost = 4,
 	pos = { x = 5, y = 3 },
 	config = { extra = { dollars = 5, odds = 2 }, mp_sticker_balanced = true },
 	loc_vars = function(self, info_queue, card)
